@@ -1,50 +1,69 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/auth';  // Import the useAuth hook to access the auth context
+import React, { useEffect, useState } from 'react';
+import { useAuth } from "../../context/auth";
+import axios from 'axios'; // Ensure axios is imported
 
-const Userdashboard = () => {
-  const [auth, setAuth] = useAuth(); // Access auth context
-  const navigate = useNavigate(); // Hook to navigate to other pages
+export default function UserDashboard() {
+    const [auth, setAuth] = useAuth();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    useEffect(() => {
+      const fetchUserInfo = async () => {
+        if (!auth.token) {
+          return;
+        }
+  
+        try {
+          const response = await axios.get(`http://localhost:5000/api/auth/user-info`, {
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+            },
+          });
+  
+          setUser(response.data);
+          setError(null); // Clear any existing error state if data is fetched successfully
+        } catch (err) {
+          console.error('Error fetching user data:', err);  // Log the full error object
+  
+          if (err.response) {
+            // Handle specific response errors
+            console.error('Error response:', err.response.data); // Log the response data
+            if (err.response?.status === 401) {
+              fetchUserInfo(); // Retry fetching user info after refreshing the token
+            } else {
+              setError(err.response?.data?.message || 'Error fetching user data');
+            }
+          } else {
+            // Network or other errors
+            setError('Network error or invalid request');
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchUserInfo();
+    }, [auth.token]);
+  
+    if (!auth.token) return <p className="text-gray-500">Loading authentication...</p>;
+    if (loading) return <p className="text-gray-500">Loading user info...</p>;
+    if (error) return <p className="text-red-500">Error: {error}</p>;
+  
 
-  // Logout handler
-  const handleLogout = () => {
-    // Clear the auth context and remove the token from localStorage
-    setAuth({ user: null, token: '' });
-    localStorage.removeItem('auth'); // Remove auth data from localStorage
-    navigate('/login'); // Navigate to the login page
-  };
-
-  return (
-    <div>
-      {/* Navbar */}
-      <nav className="bg-blue-600 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="text-white text-xl font-bold">DocConnect</div>
-          <div className="flex space-x-4">
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Dashboard Content */}
-      <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Welcome to Your Dashboard, {auth.user?.name || 'User'}!</h1>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800">Your Profile</h2>
-            <p className="text-gray-600 mt-4">Email: {auth.user?.email || 'N/A'}</p>
-            <p className="text-gray-600">Role: {auth.user?.role || 'N/A'}</p>
-            {/* Add more dashboard content as needed */}
+    return (
+      <div className="flex">
+        <div className="flex-1">
+          <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10">
+            <h1 className="text-2xl font-semibold text-gray-800 mb-4">User Info</h1>
+            <div className="space-y-3">
+              <p><strong className="font-medium text-gray-700">Name:</strong> <span className="text-gray-900">{user?.name}</span></p>
+              <p><strong className="font-medium text-gray-700">Email:</strong> <span className="text-gray-900">{user?.email}</span></p>
+              <p><strong className="font-medium text-gray-700">Username:</strong> <span className="text-gray-900">{user?.username}</span></p>
+              <p><strong className="font-medium text-gray-700">Phone no.:</strong> <span className="text-gray-900">{user?.phone}</span></p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export default Userdashboard;
+    );
+}

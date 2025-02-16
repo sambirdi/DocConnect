@@ -5,6 +5,7 @@ const authenticate = require('../middleware/authMiddleware');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 require("dotenv").config();
+const Notification = require('../models/Notification'); // Import Notification model
 
 exports.register = async (req, res) => {
   try {
@@ -58,22 +59,24 @@ exports.register = async (req, res) => {
   }
 };
 
-// registration
-exports.docregister = async (req, res) => {
+// Doctor Registration
+exports.docRegister = async (req, res) => {
   try {
-    const { fname, lname, email, password, phone, practice, location, licenseNo, role } = req.body;
+    const { name, email, password, phone, practice, location, licenseNo, role } = req.body;
 
     // Validations
-    if (!fname || !lname || !email || !password || !phone || !licenseNo || !practice || !location) {
+    if (!name || !email || !password || !phone || !licenseNo || !practice || !location) {
       return res.status(400).json({ message: "All fields are required" });
     }
     if (password.length < 6) {
       return res.status(400).json({ message: "Password should be at least 6 characters long" });
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
+
     if (role !== 'doctor') {
       return res.status(400).json({ message: "Invalid role for this route" });
     }
@@ -87,10 +90,9 @@ exports.docregister = async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create and save the user
+    // Create and save the user with isApproved set to false
     const user = new userModel({
-      fname,
-      lname,
+      name,
       email,
       phone,
       password: hashedPassword,
@@ -98,20 +100,42 @@ exports.docregister = async (req, res) => {
       location,
       practice,
       role,
+      isApproved: false, // New field for approval
     });
     await user.save();
 
+    // Dynamically fetch the admin ID (assuming admin is authenticated and admin info is in req.user)
+        // Fetch the admin ID dynamically from the database
+        const admin = await userModel.findOne({ role: 'admin' }); // Find the admin user
+        if (!admin) {
+          return res.status(500).json({ message: "Admin not found. Unable to send notification." });
+        }
+    
+    
+    // If there's no admin authenticated, you can handle it here (if needed)
+    if (!admin) {
+      return res.status(403).json({ message: "You are not authorized to perform this action" });
+    }
+
+    // Create a notification for the admin about the new doctor registration
+    const notification = new Notification({
+      message: `A new doctor ${name} has registered and is awaiting approval.`,
+      adminId: admin,  // The ID of the authenticated admin
+      doctorId: user._id, // Link to the newly registered doctor
+    });
+
+    await notification.save();
+
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      user: { id: user._id, fname: user.fname, lname: user.lname, email: user.email },
+      message: "Doctor registered successfully. Await admin approval.",
+      user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error("Error in doctor registration:", error);
     res.status(500).json({ success: false, message: "Error in registration", error: error.message });
   }
 };
-
 
 // login
 exports.login = async (req, res) => {
@@ -129,6 +153,11 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
+    // Check if the user is a doctor and if they are approved
+    if (user.role === 'doctor' && !user.isApproved) {
+      return res.status(403).json({ message: 'Admin needs to approve your account before you can log in.' });
+    }
+
     // Compare the entered password with the hashed password stored in the database
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -136,10 +165,10 @@ exports.login = async (req, res) => {
     }
 
     // Create a JWT token
-    const token =   JWT.sign(
+    const token = JWT.sign(
       { id: user._id, email: user.email, role: user.role }, // Payload (user info)
       process.env.JWT_SECRET, // Secret key for JWT
-      { expiresIn: '1h' } // Token expiration time
+      { expiresIn: '1d' } // Token expiration time
     );
 
     // Return success response with the token
@@ -147,7 +176,7 @@ exports.login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,  // Send the JWT token to the frontend
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, isApproved: user.isApproved},
     });
   } catch (error) {
     console.error(error);
@@ -248,5 +277,28 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     console.error("Error resetting password:", error);
     res.status(500).send({ message: "Something went wrong", error });
+  }
+};
+
+// User info route
+exports.userInfo = async (req, res) => {
+  try {
+    // Assuming req.user.id contains the user ID
+    const user = await userModel.findById(req.user.id); 
+
+    if (!user) {
+      // Return a 404 if the user is not found
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return the user data as JSON if found
+    res.json(user);  
+  } catch (error) {
+    // Handle specific errors (e.g., database connection issues)
+    console.error(error);  // Log error details for debugging purposes
+    res.status(500).json({ 
+      message: 'Server error, unable to fetch user data', 
+      error: error.message || 'Internal Server Error'
+    });
   }
 };

@@ -11,11 +11,14 @@ const userSchema = new mongoose.Schema({
   phone: { type: String},
   practice: { type: String},
   location: { type: String},
+  licenseNo: {type: String},
   role: {
     type: String,
     enum: ["doctor", "patient", "admin"], // Allowed roles
     default: "patient", // Default for auto-assigned role
   },
+  isApproved: { type: Boolean, default: false }, // New field for approval status
+
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 });

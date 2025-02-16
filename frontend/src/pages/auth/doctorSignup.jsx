@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const ListYourPractice = () => {
   const [formData, setFormData] = useState({
-    fname: "",
-    lname: "",
+    name: "",
     email: "",
     phone: "",
     practice: "",
@@ -36,8 +35,7 @@ const ListYourPractice = () => {
       await axios.post("http://localhost:5000/api/auth/docregister", formData);
       setMessage("Your practice has been successfully listed!");
       setFormData({
-        fname: "",
-        lname: "",
+        name: "",
         email: "",
         phone: "",
         practice: "",
@@ -93,42 +91,25 @@ const ListYourPractice = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* First and Last Name */}
             <div className="flex flex-col sm:flex-row sm:space-x-4">
-              <div className="w-full sm:w-1/2">
+              <div className="w-full">
                 <label
-                  htmlFor="fname"
+                  htmlFor="name"
                   className="block text-gray-700 font-medium mb-1"
                 >
-                  First Name
+                  Full Name
                 </label>
                 <input
                   type="text"
-                  id="fname"
-                  name="fname"
-                  value={formData.fname}
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                  placeholder="John"
+                  placeholder="John Doe"
                   required
                 />
               </div>
-              <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
-                <label
-                  htmlFor="lname"
-                  className="block text-gray-700 font-medium mb-1"
-                >
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  id="lname"
-                  name="lname"
-                  value={formData.lname}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                  placeholder="Doe"
-                  required
-                />
-              </div>
+
             </div>
 
             {/* Email */}

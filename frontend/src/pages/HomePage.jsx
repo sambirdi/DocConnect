@@ -1,14 +1,15 @@
 import { FiSearch, FiMapPin, FiCpu, FiShield, FiStar, FiMessageSquare } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import Footer from "../components/footer/footer";
+import Header from "../components/header/header";
 
-const features = [
+export const features = [
     { title: "AI-Powered Recommendations", description: "Our advanced AI suggests the best doctors based on your needs.", icon: FiCpu },
     { title: "Verified Doctors", description: "We ensure all listed doctors are verified professionals.", icon: FiShield },
     { title: "Doctor Reviews & Ratings", description: "See reviews and ratings from other patients.", icon: FiStar },
     { title: "Quick Chat Support", description: "Have questions? Our chatbot is here to assist you anytime.", icon: FiMessageSquare },
 ];
-const specializations = [
+export const specializations = [
     { name: "Primary Care", icon: "https://img.icons8.com/ios-filled/100/0A2647/stethoscope.png" },
     { name: "Dentist", icon: "https://img.icons8.com/ios-filled/100/0A2647/tooth.png" },
     { name: "OB-GYN", icon: "https://img.icons8.com/ios-filled/100/0A2647/pregnant.png" },
@@ -21,39 +22,8 @@ export default function HomePage() {
     return (
         <div className="min-h-screen">
             {/* Hero Section */}
-            {/* <div className="bg-gradient-to-b"
-                style={{
-                    background: 'linear-gradient(180deg, rgba(36,52,71,1) 0%, rgba(63,95,128,1) 22%, rgba(118,155,170,1) 50%, rgba(41,91,134,1) 100%)',
-                }}
-            > */}
             <div className="bg-gradient-to-b from-navy via-navy/50 to-slate-700">
-                <nav className="container mx-auto px-4 py-4">
-                    <div className="max-w-6xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="text-2xl text-white font-bold flex items-center gap-1">
-                                <NavLink to="/"><span>DocConnect</span></NavLink>
-                            </div>
-                        </div>
-                        <div className="hidden md:flex items-center justify-center space-x-8 text-white">
-                            <a href="/" className="hover:text-blue-300">Home</a>
-                            <a href="/browse" className="hover:text-blue-300">Browse</a>
-                            <a href="/about" className="hover:text-blue-300">About us</a>
-                            <a href="/doctorsignup" className="hover:text-blue-300">List your Practice</a>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <NavLink to="/login">
-                                <button className="px-4 py-2 text-white border border-white rounded-full hover:bg-white hover:text-navy transition">
-                                    Sign In
-                                </button>
-                            </NavLink>
-                            <NavLink to="/signup">
-                                <button className="px-4 py-2 bg-white text-navy rounded-full border border-white hover:bg-navy/100 hover:text-white transition">
-                                    Register
-                                </button>
-                            </NavLink>
-                        </div>
-                    </div>
-                </nav>
+                <Header />
 
                 <main className="container mx-auto px-4 pt-20 pb-32">
                     <div className="max-w-3xl mx-auto text-center">
@@ -109,44 +79,44 @@ export default function HomePage() {
             </section>
 
             {/* Popular Specializations Section */}
-           <section className="container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto text-center space-y-6">
-    <h2 className="text-4xl font-bold text-[#161617]">Our Specialty</h2>
-    <p className="text-gray-600 text-lg">We provide world-class services with the best medical team!</p>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {specializations.map((specialization) => (
-        <div
-          key={specialization.name}
-          className="group relative p-8 rounded-2xl bg-gradient-to-b from-[#8aa1c6] to-[#0A2647] 
+            <section className="container mx-auto px-4 py-16">
+                <div className="max-w-6xl mx-auto text-center space-y-6">
+                    <h2 className="text-4xl font-bold text-[#161617]">Our Specialty</h2>
+                    <p className="text-gray-600 text-lg">We provide world-class services with the best medical team!</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {specializations.map((specialization) => (
+                            <div
+                                key={specialization.name}
+                                className="group relative p-8 rounded-2xl bg-gradient-to-b from-[#8aa1c6] to-[#0A2647] 
             hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
-        >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-transparent to-transparent group-hover:opacity-0 transition-opacity duration-300" />
+                            >
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-transparent to-transparent group-hover:opacity-0 transition-opacity duration-300" />
 
-          <div className="relative space-y-4 flex flex-col items-center">
-            {/* Icon Container */}
-            <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center group-hover:bg-[#8aa1c6] transition-colors duration-300">
-              <img
-                src={specialization.icon || "/placeholder.svg"}
-                alt={`${specialization.name} icon`}
-                className="w-6 h-6 group-hover:filter-none transition-all duration-300"
-              />
-            </div>
+                                <div className="relative space-y-4 flex flex-col items-center">
+                                    {/* Icon Container */}
+                                    <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center group-hover:bg-white transition-colors duration-300">
+                                        <img
+                                            src={specialization.icon || "/placeholder.svg"}
+                                            alt={`${specialization.name} icon`}
+                                            className="w-6 h-6 group-hover:filter-none transition-all duration-300"
+                                        />
+                                    </div>
 
-            {/* Title */}
-            <h3 className="text-xl font-semibold text-white group-hover:text-gray-900 text-center">
-              {specialization.name}
-            </h3>
+                                    {/* Title */}
+                                    <h3 className="text-xl font-semibold text-white group-hover:text-white text-center">
+                                        {specialization.name}
+                                    </h3>
 
-            {/* Description */}
-            <p className="text-white/90 text-sm text-center group-hover:text-gray-600">
-              {specialization.description}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-</section>
+                                    {/* Description */}
+                                    <p className="text-white/90 text-sm text-center group-hover:text-gray-600">
+                                        {specialization.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
 
             {/* Key Features Section */}
