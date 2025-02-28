@@ -6,8 +6,8 @@ import Signup from './pages/auth/Signup';
 import ListYourPractice from './pages/auth/doctorSignup';
 import ResetPassword from './pages/auth/resetpassword';
 import HomePage from './pages/HomePage';
-import Profile from './pages/doctor/profile';
-import ForgotPassword from './pages/auth/forgotpassowrd';
+//import Profile from './pages/doctor/profile';
+import ForgotPassword from './pages/auth/forgetpassword';
 import AdminDashboard from './pages/admin/admindashboard';
 import AdminRoute from './components/Routes/AdminRoute';
 import DoctorRoute from './components/Routes/DoctorRoutes';
@@ -15,6 +15,8 @@ import PatientRoute from './components/Routes/PatientRoutes';
 import UserDashboard from './pages/user/Userdashboard';
 import DoctorDashboard from './pages/doctor/doctordashboard';
 import AdminNotifications from './pages/admin/adminNotification';
+import UpdateProfile from './pages/doctor/updateProfile';
+
 
 const App = () => {
   return (
@@ -27,7 +29,6 @@ const App = () => {
         <Route path="/doctorsignup" element={<ListYourPractice />} />
         {/* <Route path="/user-dashboard" element={<UserDashboard />} /> */}
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/doctor-profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* <Route path="/admin-dashboard" element={<AdminDashboard/>}/> */}
 

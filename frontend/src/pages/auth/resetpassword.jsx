@@ -1,36 +1,56 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
+import { useNavigate } from "react-router-dom";
 
 const ResetPassword = () => {
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetError, setResetError] = useState("");
-  const [resetMessage, setResetMessage] = useState("");
-  const navigate = useNavigate(); // Initialize the navigate function
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const navigate = useNavigate(); // Initialize useNavigate
 
-  const handleResetChange = (e) => {
-    setResetEmail(e.target.value);
+  const handleNewPasswordChange = (e) => {
+    setNewPassword(e.target.value);
   };
 
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setResetError("");
-    setResetMessage("");
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPassword(e.target.value);
+  };
 
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    if (!emailRegex.test(resetEmail)) {
-      setResetError("Please enter a valid email address.");
+  const handleSubmitNewPassword = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
       return;
     }
 
     try {
-      await axios.post("http://localhost:5000/api/auth/forgot-password", { email: resetEmail });
-      setResetMessage("A password reset link has been sent to your email.");
-      setTimeout(() => {
-        navigate("/login"); // Navigate to the login page after 3 seconds
-      }, 3000);
+      const searchParams = new URLSearchParams(window.location.search);
+      const token = searchParams.get("token");
+      const email = searchParams.get("email");
+
+      await axios.post("http://localhost:5000/api/auth/reset-password", {
+        token,
+        email,
+        newPassword,
+      });
+
+      setPasswordSuccess("Your password has been successfully updated.");
+
+      // Redirect to login page after a short delay
+      setTimeout(() => navigate("/login"), 2000); // 2-second delay
     } catch (err) {
-      setResetError("Error sending reset link. Please try again.");
+      setPasswordError(
+        err.response?.data?.message || "Error updating password. Please try again."
+      );
     }
   };
 
@@ -49,39 +69,56 @@ const ResetPassword = () => {
       {/* Right Section */}
       <div className="w-1/2 flex items-center justify-center bg-gray-50">
         <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2 text-left">Reset Password</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2 text-left">Set New Password</h2>
           <p className="text-sm text-gray-600 mb-4 text-left">
-            Enter your email address below, and we’ll send you a link to reset your password.
+            Enter your new password below to complete the reset process.
           </p>
 
-          {/* Reset Error Message */}
-          {resetError && <p className="text-red-500 font-medium mb-4">{resetError}</p>}
-          {resetMessage && <p className="text-green-500 font-medium mb-4">{resetMessage}</p>}
+          {/* New Password Section */}
+          {passwordError && <p className="text-red-500 font-medium mb-4">{passwordError}</p>}
+          {passwordSuccess && <p className="text-green-500 font-medium mb-4">{passwordSuccess}</p>}
 
-          <form onSubmit={handleResetPassword}>
-            {/* Email Input */}
+          <form onSubmit={handleSubmitNewPassword}>
+            {/* New Password Input */}
             <div className="mb-4">
-              <label htmlFor="reset-email" className="block text-gray-700 font-medium mb-1">
-                Your Email
+              <label htmlFor="new-password" className="block text-gray-700 font-medium mb-1">
+                New Password
               </label>
               <input
-                type="email"
-                id="reset-email"
-                name="reset-email"
-                value={resetEmail}
-                onChange={handleResetChange}
+                type="password"
+                id="new-password"
+                name="new-password"
+                value={newPassword}
+                onChange={handleNewPasswordChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="Enter your email"
+                placeholder="Enter new password"
                 required
               />
             </div>
 
-            {/* Reset Button */}
+            {/* Confirm Password Input */}
+            <div className="mb-4">
+              <label htmlFor="confirm-password" className="block text-gray-700 font-medium mb-1">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="confirm-password"
+                name="confirm-password"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
               className="w-full bg-navy text-white py-2 rounded-md hover:bg-blue-700 transition"
             >
-              Send Reset Link
+              Submit
             </button>
           </form>
         </div>

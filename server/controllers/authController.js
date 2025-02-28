@@ -193,7 +193,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendPasswordResetEmail = async (email, accessToken) => {
-  const resetLink = `http://localhost:3000/forgot-password?token=${accessToken}&email=${email}`;
+  const resetLink = `http://localhost:3000/reset-password?token=${accessToken}&email=${email}`;
 
   const mailOptions = {
     from: 'np03cs4a220023@heraldcollege.edu.np', // sender address

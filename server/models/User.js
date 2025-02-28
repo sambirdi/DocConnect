@@ -1,3 +1,4 @@
+const { text } = require('body-parser');
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -12,10 +13,18 @@ const userSchema = new mongoose.Schema({
   practice: { type: String},
   location: { type: String},
   licenseNo: {type: String},
+  about: {type: String},
+  institution: {type: String},
+  experience: {type: String},
+  qualification: {type: String},
   role: {
     type: String,
     enum: ["doctor", "patient", "admin"], // Allowed roles
     default: "patient", // Default for auto-assigned role
+  },
+  photo: {
+    data: Buffer, 
+    contentType: String, 
   },
   isApproved: { type: Boolean, default: false }, // New field for approval status
 
