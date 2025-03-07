@@ -15,7 +15,7 @@ import PatientRoute from './components/Routes/PatientRoutes';
 import UserDashboard from './pages/user/Userdashboard';
 import DoctorDashboard from './pages/doctor/doctordashboard';
 import AdminNotifications from './pages/admin/adminNotification';
-import UpdateProfile from './pages/doctor/updateProfile';
+
 
 
 const App = () => {

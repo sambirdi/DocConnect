@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   practice: { type: String},
   location: { type: String},
   licenseNo: {type: String},
-  about: {type: String},
+  about: {type: String}, 
   institution: {type: String},
   experience: {type: String},
   qualification: {type: String},
