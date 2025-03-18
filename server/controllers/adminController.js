@@ -139,4 +139,62 @@ exports.markNotificationAsRead = async (req, res) => {
     console.error("Error updating notification:", error);
     res.status(500).json({ message: "Error updating notification" });
   }
+  
+};
+
+//all users
+exports.users = async (req, res) => {
+  try {
+      const users = await userModel.find({
+          role: { $ne: 'Admin' }     // Exclude users with role 'admin'
+      }).select('username email avatar');
+      res.status(200).json(users);
+  } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+}
+
+// Controller to fetch recent doctors and patients
+exports.getRecentUsers = async (req, res) => {
+  try {
+    // Check if the user is an admin
+    const admin = req.user; // Assuming admin is in req.user after authentication
+    if (admin.role !== 'admin') {
+      return res.status(403).json({ message: "You are not authorized to view this data." });
+    }
+
+    // Fetch counts
+    const totalUsers = await userModel.countDocuments({ role: { $ne: 'admin' } }); // Exclude admins
+    const totalDoctors = await userModel.countDocuments({ role: 'doctor' });
+    const totalPatients = await userModel.countDocuments({ role: 'patient' });
+    const pendingDoctors = await userModel.countDocuments({ role: 'doctor', isApproved: false });
+
+    // Fetch recent doctors (approved or pending)
+    const recentDoctors = await userModel
+      .find({ role: 'doctor' })
+      .select('name email phone licenseNo location practice isApproved createdAt') // Select relevant fields
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Fetch recent patients
+    const recentPatients = await userModel
+      .find({ role: 'patient' })
+      .select('name email phone location createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Return the response with counts and recent users
+    res.status(200).json({
+      totalUsers,
+      totalDoctors,
+      totalPatients,
+      pendingDoctors,
+      recentDoctors,
+      recentPatients,
+    });
+  } catch (error) {
+    console.error("Error fetching recent users and counts:", error);
+    res.status(500).json({ message: "Error fetching data", error: error.message });
+  }
 };

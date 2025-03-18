@@ -15,6 +15,11 @@ import PatientRoute from './components/Routes/PatientRoutes';
 import UserDashboard from './pages/user/Userdashboard';
 import DoctorDashboard from './pages/doctor/doctordashboard';
 import AdminNotifications from './pages/admin/adminNotification';
+import AboutUs from './pages/About';
+import Profile from './pages/user/doctorProfile';
+import BrowseSpecialties from './pages/browse';
+import DoctorList from './pages/specialization/physician';
+
 
 
 
@@ -27,6 +32,10 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/doctorsignup" element={<ListYourPractice />} />
+        <Route path="/About" element={<AboutUs />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/browse" element={< BrowseSpecialties/>} />
+        <Route path="/physician" element={< DoctorList/>} />
         {/* <Route path="/user-dashboard" element={<UserDashboard />} /> */}
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

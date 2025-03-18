@@ -1,5 +1,5 @@
 const express = require('express');
-const { adminApproveRejectDoctor , getNotifications, markNotificationAsRead } = require('../controllers/adminController');  // Destructure the function correctly
+const { adminApproveRejectDoctor , getNotifications, markNotificationAsRead, users, getRecentUsers } = require('../controllers/adminController');  // Destructure the function correctly
 const { authenticateAdmin } = require('../middleware/authMiddleware');  // Ensure this is the correct path
 
 const router = express.Router();
@@ -10,5 +10,8 @@ router.get('/notifications', authenticateAdmin, getNotifications);
 
 // Route to mark a specific notification as read
 router.patch('/notifications/:id', authenticateAdmin, markNotificationAsRead);
+router.get('/all-users/:id', authenticateAdmin, users);
+
+router.get('/recent-users', authenticateAdmin, getRecentUsers);
 
 module.exports = router;

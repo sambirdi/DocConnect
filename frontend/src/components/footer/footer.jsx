@@ -59,7 +59,7 @@ export default function Footer() {
               <h3 className="text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-300">
                 <li>+91234512345</li>
-                <li>info@docconnectt.com</li>
+                <li>info@docconnect.com</li>
               </ul>
             </div>
           </div>

@@ -1,7 +1,14 @@
+/* Tailwind's default directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Custom styles */
+.text-shadow-lg {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Global body styles */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -11,7 +18,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Code styles */
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

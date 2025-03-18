@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth"; // Assuming you have an auth context
 import { NavLink } from "react-router-dom";
+import BrowseSpecialties from "../../pages/browse"; // Adjust the import path
 
 const Header = () => {
   const [auth, setAuth] = useAuth();
   const [activeNav, setActiveNav] = useState([true, false, false, false]); // Initial active state for nav items
-  const [showDropdown, setShowDropdown] = useState(false); // State to manage dropdown visibility
-  const [notifications, setNotifications] = useState(0); // Set notifications to 0, no count shown
+  const [showDropdown, setShowDropdown] = useState(false); // State to manage user dropdown visibility
+  const [showBrowsePopup, setShowBrowsePopup] = useState(false); // State to manage browse popup visibility
 
   // Handle user logout
   const handleLogout = () => {
@@ -23,7 +24,7 @@ const Header = () => {
     if (storedAuth) {
       setAuth(JSON.parse(storedAuth)); // Set the auth state from localStorage
     }
-  }, [setAuth]); // Only run once on component mount
+  }, [setAuth]);
 
   // Initialize activeNav from sessionStorage if available
   useEffect(() => {
@@ -33,94 +34,94 @@ const Header = () => {
     }
   }, []);
 
+  // Prevent background scrolling when popup is open
+  useEffect(() => {
+    if (showBrowsePopup) {
+      // Disable scroll on body
+      document.body.style.overflow = "hidden";
+      document.body.style.height = "100vh";
+    } else {
+      // Re-enable scroll on body
+      document.body.style.overflow = "auto";
+      document.body.style.height = "auto";
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.overflow = "auto";
+      document.body.style.height = "auto";
+    };
+  }, [showBrowsePopup]);
+
+  // Function to toggle browse popup
+  const toggleBrowsePopup = (e) => {
+    e.preventDefault(); // Prevent default navigation
+    setShowBrowsePopup(!showBrowsePopup);
+  };
+
   return (
     <nav className="container mx-auto px-4 py-4">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
-        {/* Left Section: Logo */}
         <div className="flex items-center gap-2">
           <div className="text-2xl text-white font-bold flex items-center gap-1">
             <NavLink to="/">DocConnect</NavLink>
           </div>
         </div>
-
-        {/* Center Section: Navigation Links (Hidden on mobile) */}
         <div className="hidden md:flex items-center justify-center space-x-8 text-white">
           <NavLink to="/">Home</NavLink>
-          <NavLink to="/browse">Browse</NavLink>
+          <a href="/browse" onClick={toggleBrowsePopup} className="cursor-pointer">
+            Browse
+          </a>
           <NavLink to="/about">About us</NavLink>
           {!auth.user && (
             <NavLink to="/doctorsignup">List your Practice</NavLink>
           )}
         </div>
 
-        {/* Right Section: User Info / Auth Buttons */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
           {auth.user ? (
-            <div className="flex items-center gap-3">
-              {/* Notification Icon */}
-              <div className="relative">
-                {notifications > 0 && (
-                  <span className="absolute top-0 right-0 block w-4 h-4 bg-red-600 text-white text-xs rounded-full flex items-center justify-center">
-                    {/* Notification Count if needed */}
-                  </span>
-                )}
-                {/* New Bell Icon in White */}
+            <div className="relative">
+              {/* Username and dropdown */}
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="text-white flex items-center gap-2"
+              >
+                <span className="text-white">
+                  {auth.user.fname ? auth.user.fname : auth.user.name}
+                </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="white"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  className="bi bi-caret-down-fill"
+                  viewBox="0 0 16 16"
                 >
-                  <path d="M10 21h4a2 2 0 1 1-4 0zm10-6v-5c0-3.1-1.64-5.64-4.5-6.32V3a1.5 1.5 0 0 0-3 0v.68C7.63 4.36 6 6.9 6 10v5l-2 2v1h20v-1l-2-2z" />
+                  <path d="M4.293 5.293a1 1 0 0 1 1.414 0L8 7.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414z" />
                 </svg>
-              </div>
-
-              {/* Username and Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="text-white flex items-center gap-2"
-                >
-                  <span className="text-white">
-                    {auth.user.fname ? auth.user.fname : auth.user.name}
-                  </span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi bi-caret-down-fill"
-                    viewBox="0 0 16 16"
+              </button>
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white text-black border border-gray-300 rounded-lg shadow-md">
+                  <NavLink
+                    to={`/dashboard/${
+                      auth.user.role === "admin"
+                        ? "admin"
+                        : auth.user.role === "doctor"
+                        ? "doctor"
+                        : "user"
+                    }`}
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-200"
                   >
-                    <path d="M4.293 5.293a1 1 0 0 1 1.414 0L8 7.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414z" />
-                  </svg>
-                </button>
-
-                {/* Dropdown Menu - positioned below the username */}
-                {showDropdown && (
-                  <div className="absolute left-0 mt-2 w-48 bg-white text-black border border-gray-300 rounded-lg shadow-md">
-                    <NavLink
-                      to={`/dashboard/${
-                        auth.user.role === "admin"
-                          ? "admin"
-                          : auth.user.role === "doctor"
-                          ? "doctor"
-                          : "user"
-                      }`}
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-200"
-                    >
-                      Profile
-                    </NavLink>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
+                    Profile
+                  </NavLink>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -138,6 +139,44 @@ const Header = () => {
           )}
         </div>
       </div>
+
+      {/* Browse Popup */}
+      {showBrowsePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto relative border border-gray-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowBrowsePopup(false)}
+              className="absolute top-4 right-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Title */}
+            <h2 className="text-2xl font-semibold text-gray-800 px-6 pt-6 pb-4">
+              Browse top specialties
+            </h2>
+
+            {/* Content */}
+            <div className="px-6 pb-6">
+              <BrowseSpecialties showHeader={false} />
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   practice: { type: String},
   location: { type: String},
   licenseNo: {type: String},
-  about: {type: String}, 
+  about: {type: String},
   institution: {type: String},
   experience: {type: String},
   qualification: {type: String},
@@ -27,10 +27,11 @@ const userSchema = new mongoose.Schema({
     contentType: String, 
   },
   isApproved: { type: Boolean, default: false }, // New field for approval status
-
   resetPasswordToken: String,
   resetPasswordExpires: Date,
-});
+},  { timestamps: true }// Add timestamps here
+); 
+
 
 userSchema.methods.generateAuthToken = function () {
   return jwt.sign({ _id: this._id, email: this.email }, process.env.JWT_SECRET, {
