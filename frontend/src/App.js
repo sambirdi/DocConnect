@@ -19,6 +19,8 @@ import AboutUs from './pages/About';
 import Profile from './pages/user/doctorProfile';
 import BrowseSpecialties from './pages/browse';
 import DoctorList from './pages/specialization/physician';
+import Doctors from './pages/admin/doctors';
+import Patients from './pages/admin/patients';
 
 
 
@@ -45,6 +47,8 @@ const App = () => {
         <Route path="/dashboard" element={<AdminRoute />}>
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="notification" element={<AdminNotifications />} />
+          <Route path="doctors" element={<Doctors />} />
+          <Route path="patients" element={<Patients />} />
         </Route>
 
         {/* Doctor Routes */}

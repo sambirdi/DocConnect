@@ -3,91 +3,137 @@ import Header from '../components/header/header';
 import Footer from '../components/footer/footer';
 import { NavLink } from 'react-router-dom';
 import { FiHeart, FiUsers, FiShield } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 const teamImage = 'https://thumbs.dreamstime.com/b/doctor-stethoscope-hand-hospital-background-gown-94227568.jpg';
 
 const AboutUs = () => {
+    const fadeIn = {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.6, ease: 'easeOut' },
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 font-sans antialiased">
             {/* Hero Section */}
-            <div className="bg-gradient-to-br from-navy/90 to-gray-800 relative z-10">
+            <div className="relative bg-gradient-to-br from-navy/90 via-navy/70 to-gray-800">
                 <Header />
-                <div
-                    className="w-full bg-cover bg-center h-80 flex flex-col justify-center items-center relative"
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1 }}
+                    className="relative bg-cover bg-center h-[32rem] flex items-center justify-center"
                     style={{
                         backgroundImage:
                             "url('https://static.vecteezy.com/system/resources/previews/023/460/068/non_2x/medical-doctor-background-illustration-ai-generative-free-photo.jpg')",
                     }}
                 >
-                    <div className="absolute inset-0 bg-black/50"></div>
-                    <div className="max-w-4xl mx-auto text-center relative z-10 px-4">
-                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">About DocConnect</h1>
-                        <nav className="text-sm text-white/80 mb-6">
-                            <NavLink to="/" className="hover:underline transition-colors duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-b from-navy/60 to-gray-800/40"></div>
+                    <div className="relative z-10 max-w-5xl mx-auto text-center px-6 py-12">
+                        <motion.h1
+                            {...fadeIn}
+                            className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight leading-tight"
+                        >
+                            About <span className="text-gray-200">DocConnect</span>
+                        </motion.h1>
+                        <nav className="text-sm md:text-base text-gray-200 mb-6 font-medium">
+                            <NavLink to="/" className="hover:text-white transition-colors duration-300">
                                 Home
                             </NavLink>
-                            {" / "}
+                            <span className="mx-2">/</span>
                             <span>About</span>
                         </nav>
-                        <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            Discover the perfect doctor with personalized recommendations tailored to your needs.
-                        </p>
+                        <motion.p
+                            {...fadeIn}
+                            transition={{ delay: 0.2 }}
+                            className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed"
+                        >
+                            Connecting you with the perfect doctor through personalized, data-driven recommendations.
+                        </motion.p>
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* Main Content */}
-            <main className="container mx-auto font-sans px-4">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* About Us Section */}
-                <section className="max-w-6xl mx-auto py-20 grid md:grid-cols-2 gap-12 items-center">
+                <motion.section
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center bg-navy/5"
+                >
                     <div className="space-y-6">
-                        <span className="inline-block px-3 py-1 bg-navy/10 text-navy rounded-full text-sm font-medium">
+                        <span className="inline-flex items-center px-3 py-1.5 bg-navy/20 text-navy rounded-full text-sm font-medium tracking-wide">
                             About DocConnect
                         </span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Your Doctor Recommendation Partner</h2>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-navy leading-tight">
+                            Your Trusted <span className="text-gray-800">Healthcare Companion</span>
+                        </h2>
                         <p className="text-gray-700 text-lg leading-relaxed">
-                            DocConnect is a cutting-edge platform designed to help you find the right doctor effortlessly. 
-                            Search and filter by specialization, symptoms, or location, and get personalized recommendations 
-                            based on your unique needs—all backed by transparent ratings and reviews from other patients.
+                            DocConnect revolutionizes how you find doctors by offering a seamless platform to search by specialization, 
+                            symptoms, or location. Our smart recommendations, paired with verified reviews, empower you to make informed 
+                            healthcare decisions with confidence.
                         </p>
                     </div>
-                    <div>
+                    <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.3 }}>
                         <img
                             src={teamImage}
                             alt="DocConnect Vision"
-                            className="w-full h-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
+                            className="w-full h-[28rem] object-cover rounded-2xl shadow-xl"
                         />
-                    </div>
-                </section>
+                    </motion.div>
+                </motion.section>
 
                 {/* Mission Section */}
-                <section className="max-w-6xl mx-auto py-20 grid md:grid-cols-2 gap-12 items-center bg-gray-100 rounded-3xl px-6">
-                    <div className="space-y-6">
-                        <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                <motion.section
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center bg-white rounded-3xl px-6 lg:px-10"
+                >
+                    <div className="space-y-6 order-2 md:order-1">
+                        <span className="inline-flex items-center px-3 py-1.5 bg-navy/20 text-navy rounded-full text-sm font-medium tracking-wide">
                             Our Mission
                         </span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Simplifying Healthcare Choices</h2>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-navy leading-tight">
+                            Empowering <span className="text-gray-800">Healthcare Decisions</span>
+                        </h2>
                         <p className="text-gray-700 text-lg leading-relaxed">
-                            At DocConnect, we’re committed to making healthcare decisions easier. Our platform connects you 
-                            with trusted doctors through smart recommendations, while our chatbot provides 24/7 assistance—without 
-                            the hassle of booking appointments directly in the system.
+                            We aim to simplify your healthcare journey by connecting you with top-tier doctors through intelligent 
+                            recommendations and a user-friendly experience—supported by our round-the-clock chatbot assistance.
                         </p>
                     </div>
-                    <div>
+                    <motion.div
+                        whileHover={{ scale: 1.03 }}
+                        transition={{ duration: 0.3 }}
+                        className="order-1 md:order-2"
+                    >
                         <img
                             src="https://rkiams.com/wp-content/uploads/2020/11/vision.jpg"
                             alt="Healthcare Professional"
-                            className="w-full h-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
+                            className="w-full h-[28rem] object-cover rounded-2xl shadow-xl"
                         />
-                    </div>
-                </section>
+                    </motion.div>
+                </motion.section>
 
                 {/* Core Values Section */}
-                <section className="max-w-6xl mx-auto py-20">
+                <motion.section
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                    className="py-24 md:py-32 bg-navy/5"
+                >
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Core Values</h2>
-                        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                            The principles driving our mission to enhance your healthcare experience.
+                        <h2 className="text-4xl md:text-5xl font-bold text-navy mb-4">
+                            Our <span className="text-gray-800">Core Values</span>
+                        </h2>
+                        <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+                            The foundation of our commitment to exceptional healthcare experiences.
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -95,91 +141,111 @@ const AboutUs = () => {
                             {
                                 icon: FiHeart,
                                 title: "User-Centric",
-                                desc: "Tailoring recommendations to your specific healthcare needs.",
-                                color: "red",
+                                desc: "Prioritizing your unique healthcare needs with tailored solutions.",
+                                color: "navy",
                             },
                             {
                                 icon: FiUsers,
                                 title: "Transparency",
-                                desc: "Providing clear ratings and reviews for informed choices.",
-                                color: "green",
+                                desc: "Delivering honest insights through clear ratings and reviews.",
+                                color: "navy",
                             },
                             {
                                 icon: FiShield,
                                 title: "Reliability",
-                                desc: "Ensuring a dependable platform with verified doctor profiles.",
-                                color: "blue",
+                                desc: "Building trust with verified profiles and dependable service.",
+                                color: "navy",
                             },
                         ].map((value, index) => (
-                            <div
+                            <motion.div
                                 key={index}
-                                className="group p-6 bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center"
+                                whileHover={{ y: -8, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                                className="p-6 bg-white rounded-2xl shadow-md hover:bg-navy/10 transition-all duration-300 text-center"
                             >
                                 <div
-                                    className={`w-14 h-14 bg-${value.color}-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-${value.color}-200 transition-colors duration-300`}
+                                    className={`w-14 h-14 bg-navy/20 rounded-full flex items-center justify-center mx-auto mb-5`}
                                 >
-                                    <value.icon className={`w-6 h-6 text-${value.color}-600 group-hover:text-${value.color}-700`} />
+                                    <value.icon className={`w-6 h-6 text-navy`} />
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-navy transition-colors duration-300">
-                                    {value.title}
-                                </h3>
-                                <p className="text-gray-600">{value.desc}</p>
-                            </div>
+                                <h3 className="text-xl font-semibold text-navy mb-3">{value.title}</h3>
+                                <p className="text-gray-700">{value.desc}</p>
+                            </motion.div>
                         ))}
                     </div>
-                </section>
+                </motion.section>
 
                 {/* How It Works Section */}
-                <section className="max-w-6xl mx-auto py-20 bg-gradient-to-br from-navy/5 to-gray-100 rounded-3xl px-6">
+                <motion.section
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                    className="py-24 md:py-32 bg-gradient-to-br from-navy/10 to-gray-100 rounded-3xl px-6 lg:px-10"
+                >
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How DocConnect Works</h2>
-                        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                            Find the right doctor in three simple steps—no appointment booking required.
+                        <h2 className="text-4xl md:text-5xl font-bold text-navy mb-4">
+                            How <span className="text-gray-800">It Works</span>
+                        </h2>
+                        <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+                            Discover your ideal doctor in just three intuitive steps.
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { step: 1, title: "Search & Filter", desc: "Use specialization, symptoms, or location to start." },
-                            { step: 2, title: "Get Recommendations", desc: "Receive tailored doctor suggestions instantly." },
-                            { step: 3, title: "Review & Choose", desc: "Explore ratings and reviews to make your decision." },
+                            { step: 1, title: "Search & Filter", desc: "Explore by specialization, symptoms, or location." },
+                            { step: 2, title: "Smart Recommendations", desc: "Get instant, personalized doctor matches." },
+                            { step: 3, title: "Review & Decide", desc: "Choose confidently with ratings and reviews." },
                         ].map((item) => (
-                            <div
+                            <motion.div
                                 key={item.step}
-                                className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+                                whileHover={{ y: -8, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+                                className="p-6 bg-white rounded-2xl shadow-md hover:bg-navy/10 transition-all duration-300"
                             >
-                                <div className="w-12 h-12 bg-navy/10 rounded-full flex items-center justify-center text-navy font-bold mb-4">
+                                <div className="w-12 h-12 bg-navy/20 rounded-full flex items-center justify-center text-navy font-bold mb-5">
                                     {item.step}
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
-                                <p className="text-gray-600">{item.desc}</p>
-                            </div>
+                                <h3 className="text-xl font-semibold text-navy mb-3">{item.title}</h3>
+                                <p className="text-gray-700">{item.desc}</p>
+                            </motion.div>
                         ))}
                     </div>
-                </section>
+                </motion.section>
 
                 {/* Chatbot Section */}
-                <section className="max-w-6xl mx-auto py-20 grid md:grid-cols-2 gap-12 items-center">
+                <motion.section
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center bg-navy/5"
+                >
                     <div className="space-y-6">
-                        <span className="inline-block px-3 py-1 bg-navy/10 text-navy rounded-full text-sm font-medium">
-                            24/7 Assistance
+                        <span className="inline-flex items-center px-3 py-1.5 bg-navy/20 text-navy rounded-full text-sm font-medium tracking-wide">
+                            24/7 Support
                         </span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Chatbot Support</h2>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-navy leading-tight">
+                            Always <span className="text-gray-800">Here to Help</span>
+                        </h2>
                         <p className="text-gray-700 text-lg leading-relaxed">
-                            Need help? Our chatbot is available 24/7 to assist with finding doctors, understanding reviews, 
-                            or navigating DocConnect—no appointments booked here, just guidance!
+                            Our advanced chatbot is available anytime to guide you through finding doctors, understanding reviews, 
+                            or using DocConnect—pure support, no bookings.
                         </p>
-                        <button className="px-8 py-3 bg-navy text-white rounded-full hover:bg-navy/80 hover:shadow-lg transition-all duration-300 font-medium">
-                            Chat Now
-                        </button>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="px-8 py-3 bg-navy text-white rounded-lg shadow-lg hover:bg-navy/90 transition-all duration-300 font-medium"
+                        >
+                            Try Chatbot Now
+                        </motion.button>
                     </div>
-                    <div>
+                    <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.3 }}>
                         <img
                             src="https://img.freepik.com/premium-vector/chatbot-blue-background-artificial-intelligence-concept-vector-illustration_319430-71.jpg"
                             alt="Chatbot Assistance"
-                            className="w-full h-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
+                            className="w-full h-[28rem] object-cover rounded-2xl shadow-xl"
                         />
-                    </div>
-                </section>
+                    </motion.div>
+                </motion.section>
             </main>
 
             <Footer />

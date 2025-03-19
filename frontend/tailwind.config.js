@@ -6,7 +6,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        navy: '#0A2647', // Custom navy color
+        navy: '#0A2647', // Your existing custom navy color
+        indigo: require('tailwindcss/colors').indigo, // Adding Tailwind's indigo palette
+        rose: require('tailwindcss/colors').rose,     // Adding Tailwind's rose palette
+        emerald: require('tailwindcss/colors').emerald, // Adding Tailwind's emerald palette
+        gray: require('tailwindcss/colors').gray,     // Ensuring gray is available (already default, but explicit for clarity)
+        yellow: require('tailwindcss/colors').yellow, // Adding yellow for star ratings in testimonials
       },
       animation: {
         'fade-in': 'fadeIn 1s ease-out',
