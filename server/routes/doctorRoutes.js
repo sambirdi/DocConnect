@@ -1,5 +1,5 @@
 const express = require('express');
-const { updateDocProfileController, docPhotoController } = require('../controllers/doctorController');  
+const { updateDocProfileController, docPhotoController, getDoctorById, getDoctorsBySpecialty } = require('../controllers/doctorController');  
 const { assignDoctorRole, authenticate } = require('../middleware/authMiddleware'); 
 const formidable = require('express-formidable'); // for handling file uploads
 
@@ -10,4 +10,7 @@ router.put('/update-docprofile', formidable(), authenticate, updateDocProfileCon
 
 // Endpoint to retrieve a user's photo by their userId
 router.get("/doc-photo/:userId", docPhotoController);
+router.get('/doc/:id', getDoctorById);
+router.get('/doc-specialty', getDoctorsBySpecialty);
+
 module.exports = router;

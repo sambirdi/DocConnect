@@ -63,13 +63,13 @@ const Patients = () => {
                                             <tr key={patient._id} className="border-b">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <img
+                                                        {/* <img
                                                             src={patient.photo?.data ? 
                                                                 `data:${patient.photo.contentType};base64,${Buffer.from(patient.photo.data).toString('base64')}` 
                                                                 : "https://via.placeholder.com/32"}
                                                             alt={patient.name}
                                                             className="h-8 w-8 rounded-full"
-                                                        />
+                                                        /> */}
                                                         <span className="font-medium text-gray-900">{patient.name}</span>
                                                     </div>
                                                 </td>

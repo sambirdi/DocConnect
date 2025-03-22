@@ -18,7 +18,7 @@ import AdminNotifications from './pages/admin/adminNotification';
 import AboutUs from './pages/About';
 import Profile from './pages/user/doctorProfile';
 import BrowseSpecialties from './pages/browse';
-import DoctorList from './pages/specialization/physician';
+import DoctorList from './pages/DoctorList';
 import Doctors from './pages/admin/doctors';
 import Patients from './pages/admin/patients';
 
@@ -35,9 +35,11 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/doctorsignup" element={<ListYourPractice />} />
         <Route path="/About" element={<AboutUs />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/doctor-profile" element={<Profile />} />
+        {/* <Route path="/profile" element={<Profile />} /> */}
+        <Route path="/doctor/:id" element={<Profile />} />
         <Route path="/browse" element={< BrowseSpecialties/>} />
-        <Route path="/physician" element={< DoctorList/>} />
+        <Route path="/doc-list/:specialty" element={<DoctorList />} />
         {/* <Route path="/user-dashboard" element={<UserDashboard />} /> */}
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

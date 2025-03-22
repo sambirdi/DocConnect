@@ -23,26 +23,22 @@ const specialties = [
 const BrowseSpecialties = ({ showHeader = true }) => {
   return (
     <div className="bg-white">
-      {/* Conditionally render Header */}
       {showHeader && (
         <div className="bg-gradient-to-br from-navy/90 to-gray-800">
           <Header />
         </div>
       )}
-
-      {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
-        {/* Specialties Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {specialties.map((specialty, index) => (
-            <div
+            <NavLink
               key={index}
+              to={`/doc-list/${specialty.name.toLowerCase().replace(/\s+/g, "-")}`} // Ensures "/doc-list/primary-care-physicians"
               className="flex items-center justify-between px-4 py-3 border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
             >
-              <NavLink to="/physician"><span className="text-gray-700 text-base font-normal">
+              <span className="text-gray-700 text-base font-normal">
                 {specialty.name}
               </span>
-              </NavLink>
               <svg
                 className="h-4 w-4 text-gray-400"
                 fill="none"
@@ -57,7 +53,7 @@ const BrowseSpecialties = ({ showHeader = true }) => {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-            </div>
+            </NavLink>
           ))}
         </div>
       </div>

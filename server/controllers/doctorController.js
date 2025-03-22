@@ -89,4 +89,80 @@ exports.docPhotoController = async (req, res) => {
         });
     }
 };
+// Get a specific doctor by ID
+exports.getDoctorById = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ success: false, message: "Invalid doctor ID" });
+      }
+  
+      const doctor = await userModel
+        .findOne({ _id: id, role: 'doctor' })
+        .select('name email phone location practice licenseNo experience institution qualification about photo isApproved');
+  
+      if (!doctor) {
+        return res.status(404).json({ success: false, message: "Doctor not found" });
+      }
+  
+      // Format photo data if it exists
+      const photoData = doctor.photo && doctor.photo.data ? {
+        contentType: doctor.photo.contentType || 'image/png',
+        data: Buffer.isBuffer(doctor.photo.data) ? doctor.photo.data.toString('base64') : doctor.photo.data
+      } : null;
+  
+      const doctorData = {
+        id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        phone: doctor.phone,
+        location: doctor.location,
+        practice: doctor.practice,
+        licenseNo: doctor.licenseNo,
+        experience: doctor.experience,
+        institution: doctor.institution,
+        qualification: doctor.qualification,
+        about: doctor.about,
+        isApproved: doctor.isApproved,
+        photo: photoData,
+      };
+  
+      res.status(200).json({ success: true, doctor: doctorData });
+    } catch (error) {
+      console.error("Error fetching doctor:", error);
+      res.status(500).json({ success: false, message: "Error fetching doctor", error: error.message });
+    }
+  };
+
+  exports.getDoctorsBySpecialty = async (req, res) => {
+    try {
+      const { specialty } = req.query;
+      const doctors = await userModel
+        .find({
+          role: 'doctor',
+          practice: { $regex: new RegExp(`^${specialty}$`, 'i') }, // Case-insensitive match
+          isApproved: true,
+        })
+        .select('name phone location practice photo about');
+  
+      const formattedDoctors = doctors.map(doctor => ({
+        id: doctor._id,
+        name: doctor.name,
+        phone: doctor.phone,
+        location: doctor.location,
+        specialty: doctor.practice,
+        about:doctor.about,
+        photo: doctor.photo?.data ? {
+          contentType: doctor.photo.contentType,
+          data: doctor.photo.data.toString('base64'),
+        } : null,
+      }));
+  
+      res.status(200).json({ success: true, doctors: formattedDoctors });
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      res.status(500).json({ success: false, message: "Error fetching doctors" });
+    }
+  };
 

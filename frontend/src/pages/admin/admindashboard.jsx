@@ -207,12 +207,16 @@ export default function AdminDashboard() {
                       {(isDoctorView ? recentDoctors : recentPatients).map((user) => (
                         <tr key={user._id} className="border-b">
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
+                           
+                            <div className="flex items-center gap-3"> 
+                              {isDoctorView && ( 
                               <img
-                                src={user.photo?.data ? `data:${user.photo.contentType};base64,${Buffer.from(user.photo.data).toString('base64')}` : "https://via.placeholder.com/32"}
+                                src={user.photo?.data ?
+                                  `data:${user.photo.contentType};base64,${user.photo.data}`
+                                  : "https://via.placeholder.com/32"}
                                 alt={user.name}
                                 className="h-8 w-8 rounded-full"
-                              />
+                              />)}
                               <span className="font-medium text-gray-900">{user.name}</span>
                             </div>
                           </td>

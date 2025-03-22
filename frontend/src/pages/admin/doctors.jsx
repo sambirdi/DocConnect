@@ -67,7 +67,7 @@ const Doctors = () => {
                                                     <div className="flex items-center gap-3">
                                                         <img
                                                             src={doctor.photo?.data ? 
-                                                                `data:${doctor.photo.contentType};base64,${Buffer.from(doctor.photo.data).toString('base64')}` 
+                                                                `data:${doctor.photo.contentType};base64,${doctor.photo.data}` 
                                                                 : "https://via.placeholder.com/32"}
                                                             alt={doctor.name}
                                                             className="h-8 w-8 rounded-full"
@@ -80,11 +80,8 @@ const Doctors = () => {
                                                 <td className="px-6 py-4 text-gray-600">{doctor.location || 'N/A'}</td>
                                                 <td className="px-6 py-4 text-gray-600">{doctor.phone || 'N/A'}</td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-full text-xs ${
-                                                        doctor.isApproved ? 
-                                                        'bg-green-100 text-green-800' : 
-                                                        'bg-yellow-100 text-yellow-800'
-                                                    }`}>
+                                                    <span className={`px-2 py-1 rounded-full text-xs ${doctor.isApproved ? 
+                                                        'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                                         {doctor.isApproved ? 'Approved' : 'Pending'}
                                                     </span>
                                                 </td>
