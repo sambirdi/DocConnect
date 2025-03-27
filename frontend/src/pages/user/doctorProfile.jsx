@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useParams, NavLink } from 'react-router-dom'; // Added useParams
 import { FaBell } from 'react-icons/fa';
 import Footer from '../../components/footer/footer';
-import axios from 'axios'; // Added axios
 import ReviewModal from '../../components/review/review';
+import axios from 'axios'; // Added axios
+import Header from '../../components/header/header';
 
 const Profile = () => {
     const { id } = useParams(); // Get the doctor ID from the URL

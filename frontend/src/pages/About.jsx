@@ -5,256 +5,184 @@ import { NavLink } from 'react-router-dom';
 import { FiHeart, FiUsers, FiShield, FiSearch, FiStar, FiCheckCircle } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
-const AboutUs = () => {
-    const fadeIn = {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.6, ease: 'easeOut' },
-    };
+const teamImage = 'https://thumbs.dreamstime.com/b/doctor-stethoscope-hand-hospital-background-gown-94227568.jpg';
 
+const AboutUs = () => {
     return (
-        <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif] antialiased">
+        <div className="min-h-screen bg-white">
             {/* Hero Section */}
-            <div className="relative bg-gradient-to-br from-[#0A2647]/90 via-[#0A2647]/70 to-gray-800">
+            <div className="bg-gradient-to-br from-navy/90 to-gray-700 relative ">
                 <Header />
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    className="relative bg-cover bg-center h-[32rem] flex items-center justify-center"
+            </div>
+
+            {/* Main Content */}
+            {/* Main Content */}
+            <main className="container mx-auto font-sans">
+                <div
+                    className="w-full bg-cover bg-center h-96 flex flex-col justify-center items-center relative"
                     style={{
                         backgroundImage:
                             "url('https://static.vecteezy.com/system/resources/previews/023/460/068/non_2x/medical-doctor-background-illustration-ai-generative-free-photo.jpg')",
                     }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#0A2647]/60 to-gray-800/40"></div>
-                    <div className="relative z-10 max-w-5xl mx-auto text-center px-6 py-12">
-                        <motion.h1
-                            {...fadeIn}
-                            className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight leading-tight"
-                        >
-                            About <span className="text-gray-200">DocConnect</span>
-                        </motion.h1>
-                        <motion.p
-                            {...fadeIn}
-                            transition={{ delay: 0.2 }}
-                            className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed"
-                        >
-                            Connecting you with the perfect doctor through personalized, data-driven recommendations.
-                        </motion.p>
-                    </div>
-                </motion.div>
-            </div>
-
-            {/* Main Content */}
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* About Us Section */}
-                <motion.section
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center"
-                >
-                    <div className="space-y-6">
-                        <span className="inline-flex items-center px-3 py-1.5 bg-[#0A2647]/10 text-[#0A2647] rounded-full text-sm font-medium tracking-wide">
-                            About DocConnect
-                        </span>
-                        <h2 className="text-4xl md:text-5xl font-bold text-[#0A2647] leading-tight">
-                            Your Trusted <span className="text-gray-800">Healthcare Companion</span>
-                        </h2>
-                        <p className="text-gray-600 text-base leading-relaxed">
-                            DocConnect revolutionizes how you find doctors by offering a seamless platform to search by specialization, 
-                            symptoms, or location. Our smart recommendations, paired with verified reviews, empower you to make informed 
-                            healthcare decisions with confidence.
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <div className="max-w-3xl mx-auto text-center relative z-10">
+                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">About DocConnect</h1>
+                        <nav className="text-sm text-white/80 mb-6">
+                            <a href="/" className="hover:underline transition-colors">
+                                Home
+                            </a>{" "}
+                            / <span>About</span>
+                        </nav>
+                        <p className="text-xl text-white/90 max-w-2xl mx-auto">
+                            Your trusted platform for finding the best doctors with ease and confidence.
                         </p>
                     </div>
-                    <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.3 }}>
+                </div>
+
+                {/* About Us Section */}
+                <section className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center py-20 px-4">
+                    <div className="relative order-2 md:order-1">
                         <img
-                            src="https://images.unsplash.com/photo-1550831107-1553da8c8464?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                            alt="DocConnect Vision"
-                            className="w-full h-[24rem] object-cover rounded-xl shadow-lg"
+                            src={teamImage || "/placeholder.svg"}
+                            alt="DocConnect Team"
+                            className="w-full h-auto rounded-lg shadow-md"
                         />
-                    </motion.div>
-                </motion.section>
+                    </div>
+                    <div className="space-y-6 order-1 md:order-2">
+                        <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-2">
+                            About Us
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-bold text-[#161617]">Connecting You to Trusted Healthcare</h2>
+                        <p className="text-gray-600 leading-relaxed">
+                            For over a decade, DocConnect has been bridging the gap between patients and trusted doctors worldwide. We
+                            simplify the process of finding the right healthcare provider by offering verified reviews, detailed
+                            specialties, and location-based recommendations, empowering you to make informed decisions for your
+                            health.
+                        </p>
+                    </div>
+                </section>
 
                 {/* Mission Section */}
-                <motion.section
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center"
-                >
-                    <div className="space-y-6 order-2 md:order-1">
-                        <span className="inline-flex items-center px-3 py-1.5 bg-[#0A2647]/10 text-[#0A2647] rounded-full text-sm font-medium tracking-wide">
-                            Our Mission
-                        </span>
-                        <h2 className="text-4xl md:text-5xl font-bold text-[#0A2647] leading-tight">
-                            Empowering <span className="text-gray-800">Healthcare Decisions</span>
-                        </h2>
-                        <p className="text-gray-600 text-base leading-relaxed">
-                            We aim to simplify your healthcare journey by connecting you with top-tier doctors through intelligent 
-                            recommendations and a user-friendly experience—supported by our round-the-clock chatbot assistance.
-                        </p>
-                    </div>
-                    <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        transition={{ duration: 0.3 }}
-                        className="order-1 md:order-2"
-                    >
-                        <img
-                            src="https://rkiams.com/wp-content/uploads/2020/11/vision.jpg"
-                            alt="Healthcare Professional"
-                            className="w-full h-[24rem] object-cover rounded-xl shadow-lg"
-                        />
-                    </motion.div>
-                </motion.section>
-
-                {/* Core Values Section */}
-                <motion.section
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="py-24 md:py-32 bg-gradient-to-b from-[#0A2647]/5 to-gray-100 relative"
-                >
-                    <div className="text-center mb-12">
-                        <h2 className="text-4xl md:text-5xl font-bold text-[#0A2647] mb-4">
-                            Our <span className="text-gray-800">Core Values</span>
-                        </h2>
-                        <p className="text-gray-600 text-base max-w-2xl mx-auto leading-relaxed">
-                            The foundation of our commitment to exceptional healthcare experiences.
-                        </p>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: FiHeart,
-                                title: "User-Centric",
-                                desc: "Prioritizing your unique healthcare needs with tailored solutions.",
-                            },
-                            {
-                                icon: FiUsers,
-                                title: "Transparency",
-                                desc: "Delivering honest insights through clear ratings and reviews.",
-                            },
-                            {
-                                icon: FiShield,
-                                title: "Reliability",
-                                desc: "Building trust with verified profiles and dependable service.",
-                            },
-                        ].map((value, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.2 }}
-                                className="p-6 bg-white rounded-xl shadow-md hover:shadow-lg hover:bg-[#0A2647]/5 transition-all duration-300 text-center"
-                            >
-                                <div className="w-16 h-16 bg-[#0A2647]/10 rounded-full flex items-center justify-center mx-auto mb-5">
-                                    <value.icon className="w-8 h-8 text-[#0A2647]" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-[#0A2647] mb-3">{value.title}</h3>
-                                <p className="text-gray-600 text-base leading-relaxed">{value.desc}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                    {/* Wave Divider */}
-                    <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
-                        <svg
-                            className="relative block w-full h-16 text-gray-50"
-                            viewBox="0 0 1200 120"
-                            preserveAspectRatio="none"
-                        >
-                            <path
-                                d="M0,0V92.14C0,92.14,300,120,600,92.14C900,64.29,1200,92.14,1200,92.14V0Z"
-                                fill="currentColor"
+                <section className="max-w-6xl mx-auto py-16 px-7">
+                    <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div className="space-y-6">
+                            <div className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium mb-2">
+                                Our Mission
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-bold text-[#161617]">Our Mission</h2>
+                            <h3 className="text-1xl text-navy/80 font-bold">We Do with Excellence</h3>
+                            <p className="text-gray-600 leading-relaxed text-lg">
+                                At DocConnect, we believe that everyone deserves access to quality healthcare, and we're dedicated to
+                                connecting patients with trusted medical professionals. Whether you're seeking a specialist, a family
+                                doctor, or urgent care, our experienced platform is here to guide you through the process and help you
+                                find the perfect healthcare match for your needs.
+                            </p>
+                        </div>
+                        <div className="overflow-hidden rounded-2xl">
+                            <img
+                                src="https://rkiams.com/wp-content/uploads/2020/11/vision.jpg"
+                                alt="Healthcare Professional"
+                                className="w-full h-full shadow-lg hover:scale-105 transition-transform duration-300"
                             />
-                        </svg>
+                        </div>
                     </div>
-                </motion.section>
+                </section>
+
+                {/* Values Section */}
+                <section className="max-w-6xl mx-auto py-24 px-4 ">
+                    <div className="text-center mb-12">
+                        <h2 className="text-4xl font-bold text-[#161617] mb-4">Our Values</h2>
+                        <p className="text-gray-600 max-w-2xl mx-auto">
+                            Because we provide trusted healthcare recommendations, putting patients first in every step.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <div className="w-8 h-8 bg-violet-500 rounded-lg"></div>
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Expert Care</h3>
+                            <p className="text-gray-600">
+                                Ensuring every patient receives guidance to the most qualified healthcare providers.
+                            </p>
+                        </div>
+
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <div className="w-8 h-8 bg-green-500 rounded-lg"></div>
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Patient Support</h3>
+                            <p className="text-gray-600">
+                                Offering comprehensive healthcare information and support for informed decisions.
+                            </p>
+                        </div>
+
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <div className="w-8 h-8 bg-blue-500 rounded-lg"></div>
+                            </div>
+                            <h3 className="text-xl font-bold mb-3">Trusted Network</h3>
+                            <p className="text-gray-600">
+                                Building a reliable network of verified healthcare professionals and resources.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
                 {/* How It Works Section */}
-                <motion.section
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="py-24 md:py-32 bg-gray-50 relative"
-                >
+                <section className="max-w-6xl mx-auto py-20 bg-gradient-to-br from-indigo-50 to-gray-100 rounded-3xl">
                     <div className="text-center mb-12">
-                        <h2 className="text-4xl md:text-5xl font-bold text-[#0A2647] mb-4">
-                            How <span className="text-gray-800">It Works</span>
-                        </h2>
-                        <p className="text-gray-600 text-base max-w-2xl mx-auto leading-relaxed">
-                            Discover your ideal doctor in just three intuitive steps.
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+                        <p className="text-gray-700 max-w-2xl mx-auto">
+                            Get personalized healthcare recommendations in just two simple steps.
                         </p>
                     </div>
-                    <div className="relative grid md:grid-cols-3 gap-8">
-                        {/* Connecting Lines */}
-                        <div className="absolute inset-x-0 top-1/2 h-1 bg-[#0A2647]/10 hidden md:block">
-                            <div className="h-full w-full bg-gradient-to-r from-transparent via-[#0A2647]/50 to-transparent"></div>
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold mb-4">
+                                1
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-3">Share Your Needs</h3>
+                            <p className="text-gray-600">
+                                Tell us about your healthcare requirements and location preferences.
+                            </p>
                         </div>
-                        {[
-                            { icon: FiSearch, title: "Search & Filter", desc: "Explore by specialization, symptoms, or location." },
-                            { icon: FiStar, title: "Smart Recommendations", desc: "Get instant, personalized doctor matches." },
-                            { icon: FiCheckCircle, title: "Review & Decide", desc: "Choose confidently with ratings and reviews." },
-                        ].map((item, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.2 }}
-                                className="relative p-6 bg-white rounded-xl shadow-md hover:shadow-lg hover:bg-[#0A2647]/5 transition-all duration-300 text-center z-10"
-                            >
-                                <div className="w-14 h-14 bg-[#0A2647]/10 rounded-full flex items-center justify-center mx-auto mb-5">
-                                    <item.icon className="w-7 h-7 text-[#0A2647]" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-[#0A2647] mb-3">{item.title}</h3>
-                                <p className="text-gray-600 text-base leading-relaxed">{item.desc}</p>
-                            </motion.div>
-                        ))}
+                        <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold mb-4">
+                                2
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-3">Get Recommendations</h3>
+                            <p className="text-gray-600">
+                                Receive personalized healthcare provider suggestions based on your specific needs.
+                            </p>
+                        </div>
                     </div>
-                </motion.section>
+                </section>
 
                 {/* Chatbot Section */}
-                <motion.section
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true }}
-                    variants={fadeIn}
-                    className="py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center"
-                >
-                    <div className="space-y-6">
-                        <span className="inline-flex items-center px-3 py-1.5 bg-[#0A2647]/10 text-[#0A2647] rounded-full text-sm font-medium tracking-wide">
-                            24/7 Support
-                        </span>
-                        <h2 className="text-4xl md:text-5xl font-bold text-[#0A2647] leading-tight">
-                            Always <span className="text-gray-800">Here to Help</span>
-                        </h2>
-                        <p className="text-gray-600 text-base leading-relaxed">
-                            Our advanced chatbot is available anytime to guide you through finding doctors, understanding reviews, 
-                            or using DocConnect—pure support, no bookings.
-                        </p>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="px-8 py-3 bg-[#0A2647] text-white rounded-lg shadow-lg hover:bg-[#0A2647]/90 transition-all duration-300 font-medium"
-                        >
-                            Try Chatbot Now
-                        </motion.button>
-                    </div>
-                    <motion.div whileHover={{ scale: 1.03 }} transition={{ duration: 0.3 }}>
+                <section className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center py-20">
+                    <div className="order-2 md:order-1">
                         <img
                             src="https://img.freepik.com/premium-vector/chatbot-blue-background-artificial-intelligence-concept-vector-illustration_319430-71.jpg"
                             alt="Chatbot Assistance"
-                            className="w-full h-[24rem] object-cover rounded-xl shadow-lg"
+                            className="w-full h-auto rounded-2xl shadow-lg hover:scale-105 transition-transform duration-300"
                         />
-                    </motion.div>
-                </motion.section>
+                    </div>
+                    <div className="space-y-6 order-1 md:order-2">
+                        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                            24/7 Support
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Need Help?</h2>
+                        <p className="text-gray-700 leading-relaxed mb-6">
+                            Have questions? Our chatbot is here 24/7 to assist with finding doctors, navigating the platform, or answering health inquiries.
+                        </p>
+                        <button className="px-8 py-3 bg-navy/90 text-white rounded-full transition-all duration-300 hover:bg-navy/80 hover:shadow-xl font-medium">
+                            Start Chat with Our Bot
+                        </button>
+                    </div>
+                </section>
             </main>
 
             <Footer />

@@ -205,7 +205,20 @@ export default function UpdateProfile({ user, onProfileUpdate }) {
                             placeholder="Enter your phone"
                         />
                     </div>
-                    <div className="sm:col-span-2">
+                    {/* <div className="sm:col-span-2"> */}
+                    <div>
+                        <label htmlFor="workplace" className="block text-sm font-medium text-gray-700 mb-1">Workplace</label>
+                        <input
+                            type="text"
+                            name="workplace"
+                            id="workplace"
+                            value={formData.workplace || ''}
+                            onChange={handleChange}
+                            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-navy/60 transition duration-200"
+                            placeholder="Enter your workplace"
+                        />
+                    </div>
+                    <div>
                         <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                         <input
                             type="text"

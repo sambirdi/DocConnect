@@ -10,7 +10,7 @@ const fs = require('fs');
 // update profile
 exports.updateDocProfileController = async (req, res) => {
     try {
-        const { name, phone, practice, location, experience, institution, qualification, about } = req.fields;
+        const { name, phone, practice, location, experience, institution, qualification, about, workplace } = req.fields;
         const userId = new mongoose.Types.ObjectId(req.user.id);
 
         const user = await userModel.findById(userId);
@@ -28,6 +28,7 @@ exports.updateDocProfileController = async (req, res) => {
             institution: institution || user.institution,
             qualification: qualification || user.qualification,
             about: about || user.about,
+            workplace: workplace || user.workplace,
         };
 
         if (photo) {
@@ -124,6 +125,7 @@ exports.getDoctorById = async (req, res) => {
         institution: doctor.institution,
         qualification: doctor.qualification,
         about: doctor.about,
+        workplace: doctor.workplace,
         isApproved: doctor.isApproved,
         photo: photoData,
       };

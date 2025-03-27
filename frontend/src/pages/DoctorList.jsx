@@ -22,7 +22,7 @@ const DoctorList = () => {
         const response = await axios.get("http://localhost:5000/api/doctor/doc-specialty", {
           params: { specialty: formattedSpecialty },
         });
-        console.log("Data Info:", response);
+        // console.log("Data Info:", response);
         setDoctors(response.data.doctors || []);
       } catch (error) {
         console.error("Error fetching doctors:", error);
