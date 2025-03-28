@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   institution: {type: String},
   experience: {type: String},
   qualification: {type: String},
+  workplace: {type: String},
   role: {
     type: String,
     enum: ["doctor", "patient", "admin"], // Allowed roles

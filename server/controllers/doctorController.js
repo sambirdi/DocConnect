@@ -9,56 +9,56 @@ const fs = require('fs');
 
 // update profile
 exports.updateDocProfileController = async (req, res) => {
-    try {
-        const { name, phone, practice, location, experience, institution, qualification, about, workplace } = req.fields;
-        const userId = new mongoose.Types.ObjectId(req.user.id);
+  try {
+      const { name, phone, practice, location, experience, institution, qualification, about, workplace } = req.fields;
+      const userId = new mongoose.Types.ObjectId(req.user.id);
 
-        const user = await userModel.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+      const user = await userModel.findById(userId);
+      if (!user) {
+          return res.status(404).json({ success: false, message: "User not found" });
+      }
 
-        const photo = req.files?.photo;
-        const updatedFields = {
-            name: name || user.name,
-            phone: phone || user.phone,
-            practice: practice || user.practice,
-            location: location || user.location,
-            experience: experience || user.experience,
-            institution: institution || user.institution,
-            qualification: qualification || user.qualification,
-            about: about || user.about,
-            workplace: workplace || user.workplace,
-        };
+      const photo = req.files?.photo;
+      const updatedFields = {
+          name: name || user.name,
+          phone: phone || user.phone,
+          practice: practice || user.practice,
+          location: location || user.location,
+          experience: experience || user.experience,
+          institution: institution || user.institution,
+          qualification: qualification || user.qualification,
+          about: about || user.about,
+          workplace: workplace || user.workplace,
+      };
 
-        if (photo) {
-            updatedFields.photo = {
-                data: fs.readFileSync(photo.path),
-                contentType: photo.type,
-            };
-            // Clean up temp file
-            fs.unlink(photo.path, (err) => err && console.error("Failed to delete temp file:", err));
-        }
+      if (photo) {
+          updatedFields.photo = {
+              data: fs.readFileSync(photo.path),
+              contentType: photo.type,
+          };
+          // Clean up temp file
+          fs.unlink(photo.path, (err) => err && console.error("Failed to delete temp file:", err));
+      }
 
-        const updatedUser = await userModel.findByIdAndUpdate(
-            userId,
-            updatedFields,
-            { new: true }
-        );
+      const updatedUser = await userModel.findByIdAndUpdate(
+          userId,
+          updatedFields,
+          { new: true }
+      );
 
-        res.status(200).json({
-            success: true,
-            message: "Profile updated successfully",
-            updatedUser,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Error while updating profile",
-            error: error.message,
-        });
-    }
+      res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          updatedUser,
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({
+          success: false,
+          message: "Error while updating profile",
+          error: error.message,
+      });
+  }
 };
 
 // get user photo
