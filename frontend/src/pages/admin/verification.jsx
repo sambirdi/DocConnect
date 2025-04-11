@@ -5,7 +5,7 @@ import { useAuth } from "../../context/auth";
 import Sidebar from "../../components/Sidebar/SidebarAdmin";
 import AdminHeader from "../../components/header/adminHeader";
 
-const AdminNotifications = () => {
+const Verification = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [auth] = useAuth(); // Removed setAuth since it's not used
@@ -52,6 +52,44 @@ const AdminNotifications = () => {
     fetchNotifications();
   }, [auth?.token, pagination.page]); // Re-fetch when page changes
 
+  // Handle Approve/Reject Actions
+  const handleAction = async (doctorId, action, notificationId) => {
+    if (!window.confirm(`Are you sure you want to ${action} this doctor?`)) return;
+
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif._id === notificationId ? { ...notif, loading: action } : notif
+      )
+    );
+
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/admin/approve-reject`,
+        { doctorId, action },
+        {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        }
+      );
+
+      toast.success(response.data.message);
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === notificationId ? { ...notif, loading: null, read: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error(`Error ${action}ing doctor:`, error);
+      toast.error(`Failed to ${action} doctor`);
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === notificationId ? { ...notif, loading: null } : notif
+        )
+      );
+    }
+  };
+
   // Pagination Controls
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.pages) {
@@ -65,7 +103,7 @@ const AdminNotifications = () => {
       <Sidebar />
       <main className="flex-1 ml-64">
         <AdminHeader />
-        <h1 className="p-5 text-4xl font-bold">Notifications</h1>
+        <h1 className="p-5 text-4xl font-bold">Verify Doctor</h1>
         <div className="p-5">
           {loading ? (
             <div className="flex justify-center items-center">
@@ -90,8 +128,40 @@ const AdminNotifications = () => {
                           <strong>Doctor's Name:</strong> {notification.doctorId.name}
                         </p>
                         <p>
+                          <strong>Email:</strong> {notification.doctorId.email}
+                        </p>
+                        <p>
+                          <strong>Phone:</strong> {notification.doctorId.phone}
+                        </p>
+                        <p>
                           <strong>License No:</strong> {notification.doctorId.licenseNo}
                         </p>
+                      </div>
+                    )}
+                    {!notification.read && notification.doctorId && (
+                      <div className="mt-2 flex items-center">
+                        {notification.loading ? (
+                          <span className="spinner-border inline-block w-4 h-4 border-4 rounded-full border-t-transparent border-blue-500 animate-spin" />
+                        ) : (
+                          <>
+                            <button
+                              onClick={() =>
+                                handleAction(notification.doctorId._id, "approve", notification._id)
+                              }
+                              className="bg-green-500 text-white px-4 py-2 mr-2 rounded hover:bg-green-600"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleAction(notification.doctorId._id, "reject", notification._id)
+                              }
+                              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -125,4 +195,4 @@ const AdminNotifications = () => {
   );
 };
 
-export default AdminNotifications;
+export default Verification;

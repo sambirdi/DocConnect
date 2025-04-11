@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const specialties = [
-  { name: "Primary Care Physicians" },
+  { name: "Primary Care Physicians", altName: "General Physician" },
   { name: "Psychiatrists" },
   { name: "Optometrists" },
   { name: "Dermatologists" },
@@ -23,17 +23,16 @@ const specialties = [
 const BrowseSpecialties = ({ showHeader = true }) => {
   return (
     <div className="bg-white">
-      {showHeader && (
-        <div className="bg-gradient-to-br from-navy/90 to-gray-800">
-          <Header />
-        </div>
-      )}
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {specialties.map((specialty, index) => (
             <NavLink
               key={index}
-              to={`/doc-list/${specialty.name.toLowerCase().replace(/\s+/g, "-")}`} // Ensures "/doc-list/primary-care-physicians"
+              to={`/doc-list/${
+                specialty.altName
+                  ? specialty.altName.toLowerCase().replace(/\s+/g, "-")
+                  : specialty.name.toLowerCase().replace(/\s+/g, "-")
+              }`} // Uses altName if available, e.g., "/doc-list/general-physician"
               className="flex items-center justify-between px-4 py-3 border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
             >
               <span className="text-gray-700 text-base font-normal">

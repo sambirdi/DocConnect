@@ -13,7 +13,7 @@ const Doctors = () => {
         const fetchDoctors = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://localhost:5000/api/admin/recent-users', {
+                const response = await fetch('http://localhost:5000/api/admin/all-users', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${auth.token}`,
@@ -38,7 +38,7 @@ const Doctors = () => {
     return (
         <div className="min-h-screen bg-gray-100 flex">
             <SidebarAdmin />
-            <main className="flex-1">
+            <main className="flex-1 ml-64">
                 <AdminHeader />
                 <div className="p-5">
                     <h1 className="text-4xl font-bold mb-6">Doctors</h1>

@@ -21,6 +21,10 @@ import BrowseSpecialties from './pages/browse';
 import DoctorList from './pages/DoctorList';
 import Doctors from './pages/admin/doctors';
 import Patients from './pages/admin/patients';
+import Verification from './pages/admin/verification';
+import SearchResults from "./pages/SearchResults";
+import AdminSetting from './pages/admin/adminSetting';
+import AddSeniorDoc from './pages/settings/AddSeniorDoc';
 
 
 
@@ -36,6 +40,7 @@ const App = () => {
         <Route path="/doctorsignup" element={<ListYourPractice />} />
         <Route path="/About" element={<AboutUs />} />
         <Route path="/doctor-profile" element={<Profile />} />
+        <Route path="/search-results" element={<SearchResults />} />
         {/* <Route path="/profile" element={<Profile />} /> */}
         <Route path="/doctor/:id" element={<Profile />} />
         <Route path="/browse" element={< BrowseSpecialties/>} />
@@ -44,13 +49,16 @@ const App = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* <Route path="/admin-dashboard" element={<AdminDashboard/>}/> */}
-
         {/* Admin Routes */}
         <Route path="/dashboard" element={<AdminRoute />}>
           <Route path="admin" element={<AdminDashboard />} />
           <Route path="notification" element={<AdminNotifications />} />
           <Route path="doctors" element={<Doctors />} />
           <Route path="patients" element={<Patients />} />
+          <Route path="verification" element={<Verification/>} />
+          <Route path="settings" element={<AdminSetting/>} />
+          <Route path="add-Senior" element={<AddSeniorDoc/>} />
+
         </Route>
 
         {/* Doctor Routes */}

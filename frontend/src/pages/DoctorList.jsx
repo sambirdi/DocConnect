@@ -43,11 +43,12 @@ const DoctorList = () => {
   // Function to render star ratings
   const renderStars = (rating) => {
     const stars = [];
+    const roundedRating = Math.round(parseFloat(rating) || 0);
     for (let i = 0; i < 5; i++) {
       stars.push(
         <FaStar
           key={i}
-          className={i < rating ? "text-yellow-400" : "text-gray-300"}
+          className={i < roundedRating ? "text-yellow-400" : "text-gray-300"}
         />
       );
     }
@@ -100,9 +101,8 @@ const DoctorList = () => {
                     <h2 className="text-xl font-semibold text-navy/90">
                       {doctor.name}
                     </h2>
-                    <p className="text-gray-600">{doctor.specialty || doctor.practice}</p>
                     <div className="flex items-center mt-1">
-                      {renderStars(doctor.rating || 0)}
+                      {renderStars(doctor.averageRating || 0)}
                       <span className="ml-2 text-gray-600">
                         ({doctor.reviewCount || 0})
                       </span>

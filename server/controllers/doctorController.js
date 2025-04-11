@@ -5,6 +5,7 @@ const crypto = require('crypto');
 require("dotenv").config();
 const mongoose = require('mongoose');
 const fs = require('fs');
+const { agentBuilder } = require("../agent/doctorSearchAgent");
 
 
 // update profile
@@ -168,3 +169,68 @@ exports.getDoctorById = async (req, res) => {
     }
   };
 
+  exports.searchDoctor = async (req, res) => {
+    // get symptoms and location from query params
+    const { symptoms, location } = req.query;
+    try {
+      // Invoke
+      const messages = [
+        {
+          role: "user",
+          content: symptoms,
+        },
+      ];
+      const result = await agentBuilder.invoke({ messages });
+  
+      if (result.messages.length === 0) {
+        return res.status(500).json({
+          success: false,
+          message: "No doctors found. Check for other symptoms",
+        });
+      }
+  
+      const response = result.messages[result.messages.length - 1].content;
+  
+      let cleanedResponse = response
+        .replace(/^```json\n/, "")
+        .replace(/\n```$/, "");
+  
+      let stringArray = [];
+      try {
+        stringArray = JSON.parse(cleanedResponse); // Parse into an array
+      } catch (error) {
+        console.error("Error parsing string array:", error);
+      }
+  
+      if (stringArray.length === 0) {
+        return res.status(500).json({
+          success: false,
+          message: "No doctors found. Check for other symptoms",
+        });
+      }
+  
+      // fetch all doctors with id and location
+  
+      const query = {
+        _id: { $in: stringArray },
+        role: "doctor",
+        isApproved: true,
+      };
+      if (location) {
+        query.location = { $regex: new RegExp(`^${location}$`, "i") };
+      }
+      const doctors = await userModel.find(query).select();
+  
+      res.status(200).json({
+        success: true,
+        message: "Doctors found",
+        data: doctors,
+      });
+    } catch (error) {
+      console.error("Error searching for doctors:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Error searching doctors" });
+    }
+  };
+  

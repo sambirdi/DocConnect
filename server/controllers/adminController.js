@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 const userModel = require('../models/User');
 const Notification = require('../models/Notification');
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 // Set up the email transporter
 const transporter = nodemailer.createTransport({
@@ -27,6 +29,7 @@ const sendDoctorStatusEmail = async (email, status) => {
     text = 'Unfortunately, your account has been rejected by the admin.';
     html = `<p>Unfortunately, your account has been rejected by the admin.</p>`;
   }
+
 
   const mailOptions = {
     from: process.env.USER_EMAIL, // Sender's email address
@@ -107,19 +110,40 @@ exports.adminApproveRejectDoctor = async (req, res) => {
   }
 };
 
-// Controller to fetch all notifications for the admin
-// Controller to fetch all notifications for the admin with doctor details (name, phone, email, licenseNo)
 exports.getNotifications = async (req, res) => {
   try {
-    // Fetch notifications for the logged-in admin and populate doctor details
-    const notifications = await Notification.find({ adminId: req.user._id })
-      .populate('doctorId', 'name phone email licenseNo') // Populate doctorId with specific fields
-      .exec(); // Ensure the query is executed
+    // Validate authenticated user
+    if (!req.user?._id) {
+      return res.status(401).json({ message: "Unauthorized: No user found" });
+    }
 
-    res.status(200).json({ notifications });
+    // Pagination parameters (default: page 1, limit 6)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const skip = (page - 1) * limit;
+
+    // Fetch notifications with pagination
+    const notifications = await Notification.find({ adminId: req.user._id })
+      .populate('doctorId', 'name phone email licenseNo')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Optional: Get total count for pagination metadata
+    const total = await Notification.countDocuments({ adminId: req.user._id });
+
+    res.status(200).json({
+      notifications,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching notifications:", error);
-    res.status(500).json({ message: "Error fetching notifications" });
+    res.status(500).json({ message: "Server error while fetching notifications" });
   }
 };
 
@@ -139,7 +163,6 @@ exports.markNotificationAsRead = async (req, res) => {
     console.error("Error updating notification:", error);
     res.status(500).json({ message: "Error updating notification" });
   }
-  
 };
 
 //all users
@@ -172,13 +195,13 @@ exports.getRecentUsers = async (req, res) => {
       .find({ role: 'doctor' })
       .select('name email phone licenseNo location practice isApproved createdAt photo')
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(5);
 
     const recentPatients = await userModel
       .find({ role: 'patient' })
       .select('name email phone location createdAt photo')
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(5);
 
     const formattedDoctors = recentDoctors.map(doctor => {
       const photoData = doctor.photo && doctor.photo.data ? {
@@ -228,5 +251,165 @@ exports.getRecentUsers = async (req, res) => {
   } catch (error) {
     console.error("Error fetching recent users and counts:", error);
     res.status(500).json({ message: "Error fetching data", error: error.message });
+  }
+};
+exports.getAllUsers = async (req, res) => {
+  try {
+    const admin = req.user;
+    if (admin.role !== 'admin') {
+      return res.status(403).json({ message: "You are not authorized to view this data." });
+    }
+
+    const totalUsers = await userModel.countDocuments({ role: { $ne: 'admin' } });
+    const totalDoctors = await userModel.countDocuments({ role: 'doctor' });
+    const totalPatients = await userModel.countDocuments({ role: 'patient' });
+    const pendingDoctors = await userModel.countDocuments({ role: 'doctor', isApproved: false });
+
+    const recentDoctors = await userModel
+      .find({ role: 'doctor' })
+      .select('name email phone licenseNo location practice isApproved createdAt photo')
+      .sort({ createdAt: -1 });
+
+    const recentPatients = await userModel
+      .find({ role: 'patient' })
+      .select('name email phone location createdAt photo')
+      .sort({ createdAt: -1 });
+
+    const formattedDoctors = recentDoctors.map(doctor => {
+      const photoData = doctor.photo && doctor.photo.data ? {
+        contentType: doctor.photo.contentType || 'image/png', // Fallback MIME type
+        data: Buffer.isBuffer(doctor.photo.data) ? doctor.photo.data.toString('base64') : doctor.photo.data
+      } : null;
+
+      return {
+        _id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        phone: doctor.phone,
+        licenseNo: doctor.licenseNo,
+        location: doctor.location,
+        practice: doctor.practice,
+        isApproved: doctor.isApproved,
+        createdAt: doctor.createdAt,
+        photo: photoData
+      };
+    });
+
+    const formattedPatients = recentPatients.map(patient => {
+      const photoData = patient.photo && patient.photo.data ? {
+        contentType: patient.photo.contentType || 'image/png',
+        data: Buffer.isBuffer(patient.photo.data) ? patient.photo.data.toString('base64') : patient.photo.data
+      } : null;
+
+      return {
+        _id: patient._id,
+        name: patient.name,
+        email: patient.email,
+        phone: patient.phone,
+        location: patient.location,
+        createdAt: patient.createdAt,
+        photo: photoData
+      };
+    });
+
+    res.status(200).json({
+      totalUsers,
+      totalDoctors,
+      totalPatients,
+      pendingDoctors,
+      recentDoctors: formattedDoctors,
+      recentPatients: formattedPatients,
+    });
+  } catch (error) {
+    console.error("Error fetching recent users and counts:", error);
+    res.status(500).json({ message: "Error fetching data", error: error.message });
+  }
+};
+
+exports.addSeniorDoctor = async (req, res) => {
+  try {
+    const { name, email, phone, practice, location, licenseNo } = req.body;
+
+    // Validate admin access
+    const admin = req.user;
+    if (admin.role !== 'admin') {
+      return res.status(403).json({ message: "Only admins can add senior doctors." });
+    }
+
+    // Validations
+    if (!name || !email || !phone || !practice || !location) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Check if the doctor already exists
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Doctor already exists" });
+    }
+
+    // Generate a temporary password
+    const tempPassword = crypto.randomBytes(8).toString('hex'); // e.g., "a1b2c3d4"
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    // Create the senior doctor
+    const seniorDoctor = new userModel({
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+      practice,
+      location,
+      role: 'doctor',
+      isApproved: true, // Senior doctors are auto-approved
+      isFirstLogin: true, // Flag for first login, only for admin-added doctors
+    });
+    await seniorDoctor.save();
+
+    // Send a single email
+    await sendSeniorDoctorEmail(name, email, practice, tempPassword);
+
+    res.status(201).json({
+      success: true,
+      message: "Senior doctor added successfully and email sent.",
+      doctor: { id: seniorDoctor._id, name, email },
+    });
+  } catch (error) {
+    console.error("Error adding senior doctor:", error);
+    res.status(500).json({ success: false, message: "Error adding senior doctor", error: error.message });
+  }
+};
+
+// Function to send a single email to senior doctors
+const sendSeniorDoctorEmail = async (name, email, practice, tempPassword) => {
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.USER_EMAIL,
+      pass: process.env.USER_PASS,
+    },
+  });
+
+  const loginLink = "http://localhost:3000/login";
+  const mailOptions = {
+    from: process.env.USER_EMAIL,
+    to: email,
+    subject: `Welcome to Our Top Doctors List, Dr. ${name}!`,
+    text: `Hey Dr. ${name}, we featured you on our site as one of the top doctors in ${practice}. You're welcome to claim your profile to manage it or let us know if you'd prefer not to be listed.\n\nHere are your login credentials:\nEmail: ${email}\nPassword: ${tempPassword}\nPlease log in at ${loginLink} and change your password immediately.`,
+    html: `<p>Hey Dr. ${name},</p>
+           <p>We featured you on our site as one of the top doctors in <strong>${practice}</strong>.</p>
+           <p>You're welcome to <a href="${loginLink}">claim your profile</a> to manage it or let us know if you'd prefer not to be listed.</p>
+           <p>Here are your login credentials:</p>
+           <ul>
+             <li><strong>Email:</strong> ${email}</li>
+             <li><strong>Password:</strong> ${tempPassword}</li>
+           </ul>
+           <p>Please <a href="${loginLink}">log in</a> and change your password immediately.</p>`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending email to senior doctor:', error);
+    throw new Error('Error sending email');
   }
 };

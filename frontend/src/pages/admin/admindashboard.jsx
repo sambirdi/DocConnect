@@ -4,11 +4,10 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/auth';
 import SidebarAdmin from '../../components/Sidebar/SidebarAdmin';
 import AdminHeader from '../../components/header/adminHeader';
-import { Bar } from 'react-chartjs-2'; // Import Bar chart
+import { Bar } from 'react-chartjs-2';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js'; // Required Chart.js components
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
-// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function AdminDashboard() {
@@ -23,7 +22,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch recent users and counts from the backend
   useEffect(() => {
     const fetchRecentUsers = async () => {
       try {
@@ -44,7 +42,7 @@ export default function AdminDashboard() {
         setDoctorCount(data.totalDoctors || 0);
         setPatientCount(data.totalPatients || 0);
         setPendingRequests(data.pendingDoctors || 0);
-        setNotificationsCount(data.pendingDoctors || 0); // Tie notifications to pending requests
+        setNotificationsCount(data.pendingDoctors || 0);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -55,14 +53,13 @@ export default function AdminDashboard() {
     if (auth.token) fetchRecentUsers();
   }, [auth.token]);
 
-  // Chart data and options
   const chartData = {
     labels: ['Doctors', 'Patients', 'Pending Requests'],
     datasets: [
       {
         label: 'User Statistics',
         data: [doctorCount, patientCount, pendingRequests],
-        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'], // Blue, Green, Yellow
+        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
         borderColor: ['#2563EB', '#059669', '#D97706'],
         borderWidth: 1,
       },
@@ -71,7 +68,7 @@ export default function AdminDashboard() {
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: false, // Allows the chart to fit the container height
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
@@ -97,7 +94,7 @@ export default function AdminDashboard() {
       <SidebarAdmin />
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 ml-64"> {/* Add ml-64 to offset the sidebar width */}
         {/* Header */}
         <AdminHeader />
 
@@ -207,16 +204,17 @@ export default function AdminDashboard() {
                       {(isDoctorView ? recentDoctors : recentPatients).map((user) => (
                         <tr key={user._id} className="border-b">
                           <td className="px-6 py-4">
-                           
-                            <div className="flex items-center gap-3"> 
-                              {isDoctorView && ( 
+                            
+                            <div className="flex items-center gap-3">
+                            {isDoctorView && (
                               <img
                                 src={user.photo?.data ?
                                   `data:${user.photo.contentType};base64,${user.photo.data}`
                                   : "https://via.placeholder.com/32"}
                                 alt={user.name}
                                 className="h-8 w-8 rounded-full"
-                              />)}
+                              />
+                            )}
                               <span className="font-medium text-gray-900">{user.name}</span>
                             </div>
                           </td>
