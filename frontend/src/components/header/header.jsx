@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import BrowseSpecialties from "../../pages/browse";
-import { FiUser, FiLogOut } from "react-icons/fi"; // Import icons
+import { FiUser, FiLogOut } from "react-icons/fi";
+import axios from "axios";
 
 const Header = () => {
   const [auth, setAuth] = useAuth();
@@ -11,7 +12,13 @@ const Header = () => {
   const [showBrowsePopup, setShowBrowsePopup] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const location = useLocation(); // Hook to track route changes
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Axios instance with base URL
+  const api = axios.create({
+    baseURL: "http://localhost:5000",
+  });
 
   // Handle user logout
   const handleLogout = () => {
@@ -20,6 +27,7 @@ const Header = () => {
       token: "",
     });
     localStorage.removeItem("auth");
+    navigate("/login");
   };
 
   // Initialize auth state from localStorage on component mount
@@ -38,10 +46,68 @@ const Header = () => {
     }
   }, []);
 
+  // Fetch notifications for doctors
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (auth.user && auth.user.role === "doctor" && auth.token) {
+        try {
+          const response = await api.get("http://localhost:5000/api/doc-notification/notifications", {
+            headers: {
+              Authorization: `Bearer ${auth.token}`,
+            },
+          });
+          if (response.data.success) {
+            console.log("Fetched notifications:", response.data.notifications);
+            setNotifications(response.data.notifications);
+          } else {
+            console.error("Fetch failed:", response.data.message);
+            setNotifications([]);
+          }
+        } catch (error) {
+          console.error("Error fetching notifications:", error.response?.data || error.message);
+          setNotifications([]);
+        }
+      } else {
+        setNotifications([]);
+      }
+    };
+
+    fetchNotifications();
+  }, [auth.token, auth.user]);
+
+  // Mark notification as read
+  const markAsRead = async (notificationId) => {
+    try {
+      const response = await api.put(
+        `http://localhost:5000/api/doc-notification/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        }
+      );
+      if (response.data.success) {
+        console.log(`Marked notification ${notificationId} as read`);
+        setNotifications((prev) => {
+          const updated = prev.map((n) =>
+            n._id === notificationId ? { ...n, isRead: true } : n
+          );
+          console.log("Updated notifications:", updated);
+          return [...updated];
+        });
+      } else {
+        console.error("Mark as read failed:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error.response?.data || error.message);
+    }
+  };
+
   // Close browse popup when route changes
   useEffect(() => {
-    setShowBrowsePopup(false); // Close popup on any route change
-  }, [location.pathname]); // Trigger when pathname changes
+    setShowBrowsePopup(false);
+  }, [location.pathname]);
 
   // Prevent background scrolling when popup is open
   useEffect(() => {
@@ -68,6 +134,19 @@ const Header = () => {
   const toggleNotificationDropdown = () => {
     setShowNotificationDropdown(!showNotificationDropdown);
   };
+
+  // Format timestamp to readable date
+  const formatTimestamp = (date) => {
+    const now = new Date();
+    const diff = Math.floor((now - new Date(date)) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    return new Date(date).toLocaleDateString();
+  };
+
+  // Calculate unread notifications count
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <nav className="container mx-auto px-4 py-4">
@@ -107,28 +186,66 @@ const Header = () => {
                 >
                   <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.491-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z" />
                 </svg>
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                   <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                    {notifications.length}
+                    {unreadCount}
                   </span>
                 )}
               </button>
               {showNotificationDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white text-black border border-gray-300 rounded-lg shadow-md z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white text-black border border-gray-300 rounded-lg shadow-md z-50">
                   <div className="px-4 py-2 font-semibold border-b border-gray-200">
                     Notifications
                   </div>
                   {notifications.length > 0 ? (
-                    notifications.map((notification, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 text-gray-800 hover:bg-gray-200"
-                      >
-                        {notification}
-                      </div>
-                    ))
+                    <>
+                      {notifications.slice(0, 3).map((notification) => (
+                        <div
+                          key={notification._id}
+                          className={`px-4 py-3 text-gray-800 hover:bg-gray-100 cursor-pointer ${
+                            !notification.isRead ? "font-semibold" : ""
+                          }`}
+                          onClick={() => {
+                            if (!notification.isRead) {
+                              markAsRead(notification._id);
+                            }
+                            navigate(`/dashboard/doc-notifications`);
+                          }}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-sm">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Rating: {notification.reviewId.rating}/5
+                              </p>
+                              <p className="text-xs text-gray-600 truncate max-w-[200px]">
+                                "{notification.reviewId.reviewText}"
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {formatTimestamp(notification.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {notifications.length > 3 && (
+                        <div className="px-4 py-2 border-t border-gray-200">
+                          <NavLink
+                            to="/dashboard/doc-notifications"
+                            className="w-full text-center block text-sm text-blue-600 hover:text-blue-800"
+                            onClick={() => setShowNotificationDropdown(false)}
+                          >
+                            Show All Notifications
+                          </NavLink>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <div className="px-4 py-2 text-gray-800">No new notifications</div>
+                    <div className="px-4 py-3 text-gray-800 text-sm">
+                      No new notifications
+                    </div>
                   )}
                 </div>
               )}
@@ -158,7 +275,6 @@ const Header = () => {
               </button>
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white text-black border border-gray-300 rounded-lg shadow-md z-50">
-                  {/* Profile Option with Icon */}
                   <NavLink
                     to={`/dashboard/${
                       auth.user.role === "admin"
@@ -171,8 +287,6 @@ const Header = () => {
                   >
                     <FiUser className="text-lg" /> Profile
                   </NavLink>
-
-                  {/* Logout Option with Icon */}
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-lg"

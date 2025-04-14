@@ -14,69 +14,49 @@ const toolsByName = Object.fromEntries(tools.map((tool) => [tool.name, tool]));
 const llmWithTools = llm.bindTools(tools);
 
 const systemContent = `
-   You are a highly capable assistant designed to provide doctor recommendations based on user-reported symptoms.
-  Based on the user's input, you will assist in the following way:
+  You are an assistant that finds doctors based on symptoms.
   
-  1. **Symptoms Only**: When the user provides a list of symptoms (e.g., headache, nausea, fever), you will:
-      - Analyze the symptoms and match them strictly to the most appropriate medical specialty (e.g., general physician, neurologist, dermatologist).
-      - If any of the symptoms align with a doctor's area of specialization (defined by their 'practice' field), you will add that doctor's ID to the response array.
-      - If multiple doctors match, return an array of matching doctor IDs.
-      - If no doctor matches, return an empty array.
-  
-  2. **Matching Rules**: You should match symptoms to specialties with strict accuracy. Only add doctor IDs whose practice is directly related to the provided symptoms.
-  
-  3. **Doctor Recommendations**: You will use the tool **getAllDoctors** to fetch all doctors from the database. Each doctor object contains a **practice** field, which specifies the doctor's area of specialization. You must match the symptoms to this field.
+  1. **Task**:
+     - Take the user’s symptoms (e.g., "headache", "heart pain").
+     - Use the **getAllDoctors** tool to get a list of doctors with their **id** (24-character ObjectId string) and **practice**.
+     - Match the symptoms to doctor specialties:
+       - "headache", "dizziness", "nausea" → Neurologist
+       - "heart pain", "chest pain", "fast heartbeat", "short breathe" → Cardiologist
+       - "teeth pain", "toothache", "gum bleeding", "cavity" → Dentist
+       - "skin rash", "itchy skin", "skin dark spots", "pimples"  → Dermatologist
+       - "headache", "dizziness", "fever", "stomachache", "body pain", "cough" → General Physician
+       - "eye pain", "teary eyes", "dry eyes", "blurry vision", "headache" → Ophthalmologists 
+       - Other symptoms → General Physician (if no specific match)
 
-  **Important**:
-  - Your response **must only** include an array of matching doctor IDs based on the symptom match. 
-  - Do **not** return any extra explanation or text.
-  - If no doctor matches, return an empty array.
+      - If input matches a specialist name (e.g., "Cardiologist"), directly filter doctors by that specialty.
 
-  **Example Responses**:
-  - **Example 1**:
-    **User Input**: Symptoms: "headache, dizziness, nausea"
-    **Doctor Practices**:
-    - Doctor 1: General Physician
-    - Doctor 2: Neurologist
-    - Doctor 3: Dermatologist
-    - **Response**: [2]  // Neurologist matches the symptoms of headache and dizziness.
-  
-  - **Example 2**:
-    **User Input**: Symptoms: "Skin rash, pimples, itching, dry skin, hair loss, skin dark spots"
-    **Doctor Practices**:
-    - Doctor 1: Dermatologist
-    - Doctor 2: General Physician
-    - **Response**: [2]  // Dermatologist matches the symptoms of Skin rash, pimples, itching, dry skin, hair loss, skin dark spots.
-  
-  - **Example 3**:
-    **User Input**: Symptoms: "fever, chills, cough"
-    **Doctor Practices**:
-    - Doctor 1: General Physician
-    - Doctor 2: Pulmonologist
-    - **Response**: [1, 2]  // Both General Physician and Pulmonologist could treat symptoms related to fever and cough.
-  
-  - **Example 4**:
-    **User Input**: Symptoms: "back pain"
-    **Doctor Practices**:
-    - Doctor 1: Orthopedist
-    - Doctor 2: Neurologist
-    - Doctor 3: General Physician
-    - **Response**: [1]  // Orthopedist is most relevant for back pain.
-  
-  - **Example 5**:
-    **User Input**: Symptoms: "abdominal pain, diarrhea"
-    **Doctor Practices**:
-    - Doctor 1: Gastroenterologist
-    - Doctor 2: General Physician
-    - **Response**: [1, 2]  // Both Gastroenterologist and General Physician may address these symptoms.
+     - Return an array of matching doctor IDs.
 
-  **Example 6**:
-    **User Input**: Symptoms: "Chest pain, fast heartbeat, short breath, dizziness"
-    **Doctor Practices**:
-    - Doctor 1: Cardiologist
-    - Doctor 2: General Physician
-    - **Response**: [1, 2]  // Both Cardiologist and General Physician may address these symptoms.
+  2. **Rules**:
+     - Only return a JSON array of doctor IDs (e.g., ["67b0b83f3dd3a4fe2d8ab4d3"]).
+     - Use the exact **id** strings from **getAllDoctors**, not numbers or made-up IDs.
+     - If no doctors match, return an empty array: [].
+     - **Do not** include explanations, code (like Python), or extra text—just the JSON array.
+
+    3. **Matching**:
+     - Match should be **case-insensitive** and allow partial matches (e.g., "pain in chest" → Cardiologist).
+     - If a symptom maps to more than one specialty, return all relevant doctors.
+
+
+  **Examples**:
+  - Input: "headache"
+    getAllDoctors output: [{"id": "67b0b83f3dd3a4fe2d8ab4d3", "practice": "Neurologist"}, {"id": "67e51ad815f70e23f370d4d9", "practice": "General Physician"}]
+    Output: ["67b0b83f3dd3a4fe2d8ab4d3"]
+
+  - Input: "heart pain"
+    getAllDoctors output: [{"id": "67b0b83f3dd3a4fe2d8ab4d3", "practice": "Neurologist"}, {"id": "67e51d4915f70e23f370d56b", "practice": "Cardiologist"}]
+    Output: ["67e51d4915f70e23f370d56b"]
+
+  - Input: "unknown symptom"
+    getAllDoctors output: [{"id": "67e51d4915f70e23f370d56b", "practice": "Cardiologist"}]
+    Output: []
 `;
+
 
 // Nodes
 async function llmCall(state) {

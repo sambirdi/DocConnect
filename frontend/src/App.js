@@ -25,6 +25,7 @@ import Verification from './pages/admin/verification';
 import SearchResults from "./pages/SearchResults";
 import AdminSetting from './pages/admin/adminSetting';
 import AddSeniorDoc from './pages/settings/AddSeniorDoc';
+import DoctorNotification from './pages/doctor/doctorNotification';
 
 
 
@@ -64,6 +65,7 @@ const App = () => {
         {/* Doctor Routes */}
         <Route path="/dashboard" element={<DoctorRoute />}>
           <Route path="doctor" element={<DoctorDashboard />} />
+          <Route path="doc-notifications" element={<DoctorNotification />} />
         </Route>
         
         {/* Patient Routes */}

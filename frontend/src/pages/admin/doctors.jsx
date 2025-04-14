@@ -65,13 +65,21 @@ const Doctors = () => {
                                             <tr key={doctor._id} className="border-b">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <img
-                                                            src={doctor.photo?.data ? 
-                                                                `data:${doctor.photo.contentType};base64,${doctor.photo.data}` 
-                                                                : "https://via.placeholder.com/32"}
-                                                            alt={doctor.name}
-                                                            className="h-8 w-8 rounded-full"
-                                                        />
+                                                        <div className="relative">
+                                                            <div className="flex-shrink-0 h-16 w-16 rounded-full bg-gray-200 overflow-hidden mx-auto mt-4">
+                                                                {doctor.photo ? (
+                                                                    <img
+                                                                        src={`data:${doctor.photo.contentType};base64,${doctor.photo.data}`}
+                                                                        alt={doctor.name}
+                                                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="h-full w-full bg-navy/10 flex items-center justify-center text-navy font-bold text-lg">
+                                                                        {doctor.name?.charAt(0) || "D"}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                         <span className="font-medium text-gray-900">{doctor.name}</span>
                                                     </div>
                                                 </td>
@@ -80,7 +88,7 @@ const Doctors = () => {
                                                 <td className="px-6 py-4 text-gray-600">{doctor.location || 'N/A'}</td>
                                                 <td className="px-6 py-4 text-gray-600">{doctor.phone || 'N/A'}</td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-full text-xs ${doctor.isApproved ? 
+                                                    <span className={`px-2 py-1 rounded-full text-xs ${doctor.isApproved ?
                                                         'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                                         {doctor.isApproved ? 'Approved' : 'Pending'}
                                                     </span>

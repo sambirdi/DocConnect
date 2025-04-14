@@ -3,6 +3,7 @@ const { adminApproveRejectDoctor ,
     getNotifications, 
     markNotificationAsRead, users, getRecentUsers, addSeniorDoctor, getAllUsers } = require('../controllers/adminController');  // Destructure the function correctly
 const { authenticateAdmin } = require('../middleware/authMiddleware');  // Ensure this is the correct path
+const formidable = require('express-formidable'); // for handling file uploads
 
 const router = express.Router();
 
@@ -16,7 +17,8 @@ router.get('/all-users/:id', authenticateAdmin, users);
 
 router.get('/recent-users', authenticateAdmin, getRecentUsers);
 router.get('/all-users', authenticateAdmin, getAllUsers);
+// router.delete('/users/:userId', authenticateAdmin, deleteUser);
 
-router.post('/add-senior-doctor', authenticateAdmin, addSeniorDoctor);
+router.post('/add-senior-doctor', authenticateAdmin, formidable(),addSeniorDoctor);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaStar } from "react-icons/fa";
+import { FiStar } from "react-icons/fi";
 import Header from "../components/header/header";
 import axios from "axios";
 
@@ -40,20 +41,6 @@ const DoctorList = () => {
     navigate(`/doctor/${doctor.id}`);
   };
 
-  // Function to render star ratings
-  const renderStars = (rating) => {
-    const stars = [];
-    const roundedRating = Math.round(parseFloat(rating) || 0);
-    for (let i = 0; i < 5; i++) {
-      stars.push(
-        <FaStar
-          key={i}
-          className={i < roundedRating ? "text-yellow-400" : "text-gray-300"}
-        />
-      );
-    }
-    return stars;
-  };
 
   // Function to truncate the about text
   const truncateText = (text, maxLength = 100) => {
@@ -86,27 +73,34 @@ const DoctorList = () => {
                   onClick={() => handleDoctorClick(doctor)} // Make the entire card clickable
                   className="flex items-start p-6 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 cursor-pointer mx-4" // Added mx-4 for left/right padding
                 >
-                  <div className="flex-shrink-0 mr-4">
-                    <img
-                      src={
-                        doctor.photo?.data
-                          ? `data:${doctor.photo.contentType};base64,${doctor.photo.data}`
-                          : "https://via.placeholder.com/64"
-                      }
-                      alt={doctor.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
+                <div className="relative">
+                  <div className="flex-shrink-0 h-16 w-16 rounded-full bg-gray-200 overflow-hidden mx-auto mt-4">
+                    {doctor.photo ? (
+                      <img
+                        src={`data:${doctor.photo.contentType};base64,${doctor.photo.data}`}
+                        alt={doctor.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-navy/10 flex items-center justify-center text-navy font-bold text-lg">
+                        {doctor.name?.charAt(0) || "D"}
+                      </div>
+                    )}
                   </div>
+                </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-semibold text-navy/90">
                       {doctor.name}
                     </h2>
                     <div className="flex items-center mt-1">
-                      {renderStars(doctor.averageRating || 0)}
-                      <span className="ml-2 text-gray-600">
-                        ({doctor.reviewCount || 0})
+                      <FiStar className="text-yellow-400 fill-current" />
+                      <span className="ml-1 text-gray-700">
+                        {doctor.reviews?.averageRating
+                          ? `${doctor.reviews.averageRating} (${doctor.reviews.totalReviews})`
+                          : "No reviews"}
                       </span>
                     </div>
+
                     <div className="flex items-center gap-2 mt-2 text-gray-700">
                       <FaMapMarkerAlt className="text-navy w-5 h-5" />
                       <span>{doctor.location}</span>

@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const userModel = require('../models/User');
 const Notification = require('../models/Notification');
+const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 
@@ -326,9 +327,55 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// Delete a user (doctor or patient) by admin
+// exports.deleteUser = async (req, res) => {
+//   try {
+//     const { userId } = req.params; // Get userId from URL parameters
+
+//     // Validate admin access
+//     const admin = req.user;
+//     if (admin.role !== 'admin') {
+//       return res.status(403).json({ message: "Only admins can delete users." });
+//     }
+
+//     // Find the user
+//     const user = await userModel.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found." });
+//     }
+
+//     // Prevent deletion of admin accounts
+//     if (user.role === 'admin') {
+//       return res.status(400).json({ message: "Cannot delete admin accounts." });
+//     }
+
+//     // Delete the user
+//     await user.deleteOne();
+
+//     // If the user was a doctor, update related notifications
+//     if (user.role === 'doctor') {
+//       const notification = await Notification.findOne({ doctorId: user._id, read: false });
+//       if (notification) {
+//         notification.message = `Doctor ${user.name} has been deleted by admin.`;
+//         notification.read = true;
+//         await notification.save();
+//       }
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: `User ${user.name} has been deleted successfully.`,
+//     });
+//   } catch (error) {
+//     console.error("Error deleting user:", error);
+//     res.status(500).json({ success: false, message: "Error deleting user", error: error.message });
+//   }
+// };
+
 exports.addSeniorDoctor = async (req, res) => {
   try {
-    const { name, email, phone, practice, location, licenseNo } = req.body;
+    const { name, email, phone, practice, location, licenseNo, experience } = req.fields; // Use req.fields for formidable
+    const photo = req.files?.photo; // Get photo from req.files
 
     // Validate admin access
     const admin = req.user;
@@ -337,7 +384,7 @@ exports.addSeniorDoctor = async (req, res) => {
     }
 
     // Validations
-    if (!name || !email || !phone || !practice || !location) {
+    if (!name || !email || !phone || !practice || !location || !licenseNo || !experience) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -351,18 +398,35 @@ exports.addSeniorDoctor = async (req, res) => {
     const tempPassword = crypto.randomBytes(8).toString('hex'); // e.g., "a1b2c3d4"
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    // Create the senior doctor
-    const seniorDoctor = new userModel({
+    // Prepare senior doctor data
+    const seniorDoctorData = {
       name,
       email,
       phone,
       password: hashedPassword,
       practice,
       location,
+      experience,
+      licenseNo,
       role: 'doctor',
       isApproved: true, // Senior doctors are auto-approved
       isFirstLogin: true, // Flag for first login, only for admin-added doctors
-    });
+    };
+
+    // Handle photo upload if provided
+    if (photo) {
+      seniorDoctorData.photo = {
+        data: fs.readFileSync(photo.path),
+        contentType: photo.type,
+      };
+      // Clean up temp file
+      fs.unlink(photo.path, (err) => {
+        if (err) console.error("Failed to delete temp file:", err);
+      });
+    }
+
+    // Create the senior doctor
+    const seniorDoctor = new userModel(seniorDoctorData);
     await seniorDoctor.save();
 
     // Send a single email

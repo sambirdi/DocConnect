@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FiSearch, FiMapPin, FiCpu, FiShield, FiStar, FiMessageSquare } from "react-icons/fi";
 import { NavLink } from "react-router-dom";
 import Footer from "../components/footer/footer";
 import Header from "../components/header/header";
 import { motion } from "framer-motion";
-import SearchResults from '../pages/SearchResults';
+import SearchResults from "../pages/SearchResults"
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const imgPath = require("../images/home1.png");
 
@@ -16,7 +17,6 @@ export const features = [
   { title: "Quick Chat Support", description: "Have questions? Our chatbot is here to assist you anytime.", icon: FiMessageSquare },
 ];
 
-// Updated specializations to include altId for Primary Care Physicians
 export const specializations = [
   {
     name: "Primary Care Physicians",
@@ -43,11 +43,26 @@ export default function HomePage() {
     symptoms: "",
     location: "",
   });
+  const [featuredDoctors, setFeaturedDoctors] = useState([]);
+
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.6, ease: "easeOut" },
   };
+
+  // Fetch recent doctors
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/doctor/all-doctors`);
+        setFeaturedDoctors(response.data.doctors); // Use the 4 most recent doctors directly
+      } catch (error) {
+        console.error("Error fetching recent doctors:", error);
+      }
+    };
+    fetchDoctors();
+  }, []);
 
   const handleSearch = () => {
     if (!searchInput.symptoms && !searchInput.location) return;
@@ -123,11 +138,10 @@ export default function HomePage() {
               <button
                 onClick={handleSearch}
                 disabled={!searchInput.symptoms && !searchInput.location}
-                className={`px-8 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300 ${
-                  !searchInput.symptoms && !searchInput.location
+                className={`px-8 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300 ${!searchInput.symptoms && !searchInput.location
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-navy text-white hover:bg-navy/90"
-                }`}
+                  }`}
               >
                 Find Now
               </button>
@@ -192,7 +206,7 @@ export default function HomePage() {
         whileInView="animate"
         viewport={{ once: true }}
         variants={fadeIn}
-        className="container mx-auto px-4 py-24 bg-white"
+        className="container mx-auto px-4 py-24 md:py-32 bg-navy/5"
       >
         <div className="max-w-6xl mx-auto text-center space-y-10">
           <h2 className="text-4xl md:text-5xl font-bold text-navy">
@@ -205,7 +219,7 @@ export default function HomePage() {
             {specializations.map((specialization) => (
               <NavLink
                 key={specialization.id}
-                to={`/doc-list/${specialization.altId || specialization.id}`} // Use altId if available
+                to={`/doc-list/${specialization.altId || specialization.id}`}
                 className="group relative p-8 rounded-2xl bg-white shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-navy/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -256,6 +270,60 @@ export default function HomePage() {
                   <p className="text-gray-600 group-hover:text-white/90">{feature.description}</p>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Featured Doctors Section */}
+      <motion.section
+        initial="initial"
+        whileInView="animate"
+        viewport={{ once: true }}
+        variants={fadeIn}
+        className="container mx-auto px-4 py-24 md:py-32 bg-navy/5"
+      >
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-navy">
+              Meet Our <span className="text-gray-800">Best Doctors</span>
+            </h2>
+            <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+              Connect with top-rated healthcare professionals of our platform.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredDoctors.map((doctor) => (
+              <motion.div
+                key={doctor.id}
+                whileHover={{ y: -5, boxShadow: "0 12px 24px rgba(10, 38, 71, 0.1)" }}
+                className="group relative bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300"
+              >
+                <NavLink to={`/doctor/${doctor.id}`}>
+                  <div className="relative">
+                    <div className="w-full h-48 bg-navy/5 overflow-hidden">
+                      {doctor.photo ? (
+                        <img
+                        src={`data:${doctor.photo.contentType};base64,${doctor.photo.data}`}
+                        alt={doctor.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 bg-white"
+                      />
+                      ) : (
+                        <div className="h-full w-full bg-navy/10 flex items-center justify-center text-navy font-bold text-2xl">
+                          {doctor.name?.charAt(0) || "D"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-2 text-center">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-navy transition-colors duration-300">
+                      {doctor.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm font-medium">{doctor.practice}</p>
+                    <p className="text-gray-500 text-sm">{doctor.location}</p>
+                  </div>
+                </NavLink>
+              </motion.div>
             ))}
           </div>
         </div>

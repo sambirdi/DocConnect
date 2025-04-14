@@ -1,5 +1,5 @@
 const express = require('express');
-const { submitDocReviewController, getDoctorReviewsController, updateReviewController, deleteReviewController } = require('../controllers/patientController');
+const { submitDocReviewController, getDoctorReviewsController, editDocReviewController, deleteDocReviewController } = require('../controllers/patientController'); // Assuming controllers are in a separate file
 const { authenticate } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -8,11 +8,9 @@ const router = express.Router();
 router.post('/reviews', authenticate, submitDocReviewController);
 // Get reviews for a specific doctor (Publicly accessible)
 router.get('/doc-reviews/:doctorId', getDoctorReviewsController);
-
-// Update a review (Patient only)
-router.put('/reviews/:reviewId', authenticate, updateReviewController);
-
+// Edit a review (Patient only)
+router.put('/edit-reviews', authenticate, editDocReviewController);
 // Delete a review (Patient only)
-router.delete('/reviews/:reviewId', authenticate, deleteReviewController);
+router.delete('/reviews/:reviewId', authenticate, deleteDocReviewController);
 
 module.exports = router;
