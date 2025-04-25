@@ -1,9 +1,10 @@
 const nodemailer = require('nodemailer');
 const userModel = require('../models/User');
 const Notification = require('../models/Notification');
-const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const fs = require('fs');
+const mongoose = require('mongoose');
 
 // Set up the email transporter
 const transporter = nodemailer.createTransport({
@@ -111,30 +112,54 @@ exports.adminApproveRejectDoctor = async (req, res) => {
   }
 };
 
+// Get notifications with certificate data
 exports.getNotifications = async (req, res) => {
   try {
-    // Validate authenticated user
     if (!req.user?._id) {
       return res.status(401).json({ message: "Unauthorized: No user found" });
     }
 
-    // Pagination parameters (default: page 1, limit 6)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
 
-    // Fetch notifications with pagination
     const notifications = await Notification.find({ adminId: req.user._id })
-      .populate('doctorId', 'name phone email licenseNo')
+      .populate('doctorId', 'name phone email licenseNo location practice certificate')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    // Optional: Get total count for pagination metadata
+    // Format notifications to include certificate data
+    const formattedNotifications = notifications.map(notification => {
+      const doctor = notification.doctorId;
+      const certificateData = doctor?.certificate?.data ? {
+        contentType: doctor.certificate.contentType || 'application/pdf',
+        data: Buffer.isBuffer(doctor.certificate.data) ? doctor.certificate.data.toString('base64') : doctor.certificate.data
+      } : null;
+
+      return {
+        _id: notification._id,
+        message: notification.message,
+        adminId: notification.adminId,
+        doctorId: doctor?._id,
+        read: notification.read,
+        createdAt: notification.createdAt,
+        doctor: doctor ? {
+          name: doctor.name,
+          phone: doctor.phone,
+          email: doctor.email,
+          licenseNo: doctor.licenseNo,
+          location: doctor.location,
+          practice: doctor.practice,
+          certificate: certificateData
+        } : null
+      };
+    });
+
     const total = await Notification.countDocuments({ adminId: req.user._id });
 
     res.status(200).json({
-      notifications,
+      notifications: formattedNotifications,
       pagination: {
         page,
         limit,
@@ -149,20 +174,80 @@ exports.getNotifications = async (req, res) => {
 };
 
 // Controller to mark a notification as read
+// exports.markNotificationAsRead = async (req, res) => {
+//   try {
+//     const notification = await Notification.findById(req.params.id);
+//     if (!notification) {
+//       return res.status(404).json({ message: "Notification not found" });
+//     }
+
+//     notification.read = true; // Set the read status to true
+//     await notification.save();
+
+//     res.status(200).json({ message: "Notification marked as read" });
+//   } catch (error) {
+//     console.error("Error updating notification:", error);
+//     res.status(500).json({ message: "Error updating notification" });
+//   }
+// };
+
 exports.markNotificationAsRead = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
+    const { id } = req.params;
+    const adminId = req.user.id;
+
+    // Validate notification ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid notification ID' });
     }
 
-    notification.read = true; // Set the read status to true
+    // Find notification and verify admin access
+    const notification = await Notification.findOne({ _id: id, adminId })
+      .populate('adminId', 'name email')
+      .populate('doctorId', 'name email licenseNo');
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found or you are not authorized' });
+    }
+
+    // Check if already read
+    if (notification.read) {
+      return res.status(400).json({ success: false, message: 'Notification is already marked as read' });
+    }
+
+    // Mark as read
+    notification.read = true;
     await notification.save();
 
-    res.status(200).json({ message: "Notification marked as read" });
+    res.status(200).json({
+      success: true,
+      message: 'Notification marked as read',
+      notification,
+    });
   } catch (error) {
-    console.error("Error updating notification:", error);
-    res.status(500).json({ message: "Error updating notification" });
+    console.error('Error marking notification as read:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error marking notification as read',
+      error: error.message,
+    });
+  }
+};
+
+exports.getUnreadNotificationCount = async (req, res) => {
+  try {
+    if (!req.user?._id) {
+      return res.status(401).json({ message: "Unauthorized: No user found" });
+    }
+
+    const unreadCount = await Notification.countDocuments({
+      adminId: req.user._id,
+      read: false,
+    });
+
+    res.status(200).json({ unreadCount });
+  } catch (error) {
+    console.error("Error fetching unread notification count:", error);
+    res.status(500).json({ message: "Server error while fetching unread count" });
   }
 };
 
@@ -179,7 +264,7 @@ exports.users = async (req, res) => {
   }
 }
 
-// Controller to fetch recent doctors and patients
+// Fetch recent doctors and patients
 exports.getRecentUsers = async (req, res) => {
   try {
     const admin = req.user;
@@ -206,7 +291,7 @@ exports.getRecentUsers = async (req, res) => {
 
     const formattedDoctors = recentDoctors.map(doctor => {
       const photoData = doctor.photo && doctor.photo.data ? {
-        contentType: doctor.photo.contentType || 'image/png', // Fallback MIME type
+        contentType: doctor.photo.contentType || 'image/png',
         data: Buffer.isBuffer(doctor.photo.data) ? doctor.photo.data.toString('base64') : doctor.photo.data
       } : null;
 
@@ -254,6 +339,7 @@ exports.getRecentUsers = async (req, res) => {
     res.status(500).json({ message: "Error fetching data", error: error.message });
   }
 };
+// Get all users (doctors and patients)
 exports.getAllUsers = async (req, res) => {
   try {
     const admin = req.user;
@@ -278,7 +364,7 @@ exports.getAllUsers = async (req, res) => {
 
     const formattedDoctors = recentDoctors.map(doctor => {
       const photoData = doctor.photo && doctor.photo.data ? {
-        contentType: doctor.photo.contentType || 'image/png', // Fallback MIME type
+        contentType: doctor.photo.contentType || 'image/png',
         data: Buffer.isBuffer(doctor.photo.data) ? doctor.photo.data.toString('base64') : doctor.photo.data
       } : null;
 
@@ -328,53 +414,53 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // Delete a user (doctor or patient) by admin
-// exports.deleteUser = async (req, res) => {
-//   try {
-//     const { userId } = req.params; // Get userId from URL parameters
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params; // Get userId from URL parameters
 
-//     // Validate admin access
-//     const admin = req.user;
-//     if (admin.role !== 'admin') {
-//       return res.status(403).json({ message: "Only admins can delete users." });
-//     }
+    // Validate admin access
+    const admin = req.user;
+    if (admin.role !== 'admin') {
+      return res.status(403).json({ message: "Only admins can delete users." });
+    }
 
-//     // Find the user
-//     const user = await userModel.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found." });
-//     }
+    // Find the user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-//     // Prevent deletion of admin accounts
-//     if (user.role === 'admin') {
-//       return res.status(400).json({ message: "Cannot delete admin accounts." });
-//     }
+    // Prevent deletion of admin accounts
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: "Cannot delete admin accounts." });
+    }
 
-//     // Delete the user
-//     await user.deleteOne();
+    // Delete the user
+    await user.deleteOne();
 
-//     // If the user was a doctor, update related notifications
-//     if (user.role === 'doctor') {
-//       const notification = await Notification.findOne({ doctorId: user._id, read: false });
-//       if (notification) {
-//         notification.message = `Doctor ${user.name} has been deleted by admin.`;
-//         notification.read = true;
-//         await notification.save();
-//       }
-//     }
+    // If the user was a doctor, update related notifications
+    if (user.role === 'doctor') {
+      const notification = await Notification.findOne({ doctorId: user._id, read: false });
+      if (notification) {
+        notification.message = `Doctor ${user.name} has been deleted by admin.`;
+        notification.read = true;
+        await notification.save();
+      }
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       message: `User ${user.name} has been deleted successfully.`,
-//     });
-//   } catch (error) {
-//     console.error("Error deleting user:", error);
-//     res.status(500).json({ success: false, message: "Error deleting user", error: error.message });
-//   }
-// };
+    res.status(200).json({
+      success: true,
+      message: `User ${user.name} has been deleted successfully.`,
+    });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ success: false, message: "Error deleting user", error: error.message });
+  }
+};
 
 exports.addSeniorDoctor = async (req, res) => {
   try {
-    const { name, email, phone, practice, location, licenseNo, experience } = req.fields; // Use req.fields for formidable
+    const { name, email, phone, practice, location, licenseNo } = req.fields; // Use req.fields for formidable
     const photo = req.files?.photo; // Get photo from req.files
 
     // Validate admin access
@@ -384,7 +470,7 @@ exports.addSeniorDoctor = async (req, res) => {
     }
 
     // Validations
-    if (!name || !email || !phone || !practice || !location || !licenseNo || !experience) {
+    if (!name || !email || !phone || !practice || !location || !licenseNo) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -406,7 +492,6 @@ exports.addSeniorDoctor = async (req, res) => {
       password: hashedPassword,
       practice,
       location,
-      experience,
       licenseNo,
       role: 'doctor',
       isApproved: true, // Senior doctors are auto-approved

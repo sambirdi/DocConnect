@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import Footer from "../components/footer/footer";
 import Header from "../components/header/header";
 import { motion } from "framer-motion";
-import SearchResults from "../pages/SearchResults"
+//import SearchResults from "../pages/SearchResults"
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 

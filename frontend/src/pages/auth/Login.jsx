@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/auth";  // Import your custom hook
+import { useAuth } from "../../context/auth";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 
@@ -7,7 +7,7 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [auth, setAuth] = useAuth();  // Use the auth context
+  const [auth, setAuth] = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,23 +17,26 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // Clear any existing error messages
-  
+    setError("");
+
     try {
       const response = await axios.post("http://localhost:5000/api/auth/login", formData);
-      console.log(response.data);  // Add this to log the response data
+      console.log(response.data);
       const { user, token } = response.data;
-  
+
       if (token) {
-        // Set the auth context and store data in localStorage
+        // Store auth data in context and localStorage
         setAuth({ user, token });
-  
+        localStorage.setItem('auth', JSON.stringify({ user, token }));
+
         // Redirect based on user role
         if (user.role === "admin") {
           navigate("/dashboard/admin");
         } else if (user.role === "doctor") {
           if (!user.isApproved) {
             setError("Your account is awaiting approval from the admin.");
+            setAuth({ token: null, user: null }); // Clear auth on error
+            localStorage.removeItem('auth');
           } else {
             navigate("/"); // Redirect to homepage if doctor is approved
           }
@@ -42,18 +45,22 @@ const Login = () => {
         }
       }
     } catch (err) {
-      console.error(err);  // Log the full error object
-      // Check for specific error codes (e.g., 403 for unapproved doctor)
+      console.error(err);
       if (err.response?.status === 403) {
-        setError("Your account is awaiting approval from the admin.");
+        if (err.response.data.message.includes("verify your email")) {
+          setError("Please verify your email before logging in.");
+        } else {
+          setError("Your account is awaiting approval from the admin.");
+        }
+      } else if (err.response?.status === 400) {
+        setError(err.response.data.message || "Invalid email or password. Please try again.");
       } else {
-        setError("Invalid email or password. Please try again.");
+        setError("An error occurred. Please try again later.");
       }
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="flex h-screen">
@@ -115,7 +122,7 @@ const Login = () => {
 
             {/* Forgot Password Link */}
             <div className="flex justify-end mb-4">
-              <a href="/forgot-password" className="text-navy hover:underline font-bold">
+              <a href="/reset-password" className="text-navy hover:underline font-bold">
                 Forgot Password?
               </a>
             </div>
@@ -123,7 +130,7 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-navy text-white py-2 rounded-md hover:bg-blue-700 transition"
+              className="w-full bg-navy text-white py-2 rounded-md hover:bg-navy/80 transition"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Log In"}
@@ -131,7 +138,7 @@ const Login = () => {
           </form>
 
           {/* Signup Link */}
-          <p className="text-sm text-center text-gray-700 mt-4">
+          <p className="text-sm text-center text-gray-600 mt-4">
             Not a member?{" "}
             <a href="/signup" className="text-navy hover:underline">
               Sign up

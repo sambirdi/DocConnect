@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/User");
-const reviewModel = require("../models/reviews");
+const reviewModel = require("../models/Reviews");
 const JWT = require("jsonwebtoken");
 const crypto = require("crypto");
 require("dotenv").config();
@@ -31,7 +31,9 @@ exports.updateDocProfileController = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
+    // Check if a photo was uploaded
     const photo = req.files?.photo;
+    // Update user information
     const updatedFields = {
       name: name || user.name,
       phone: phone || user.phone,
@@ -124,9 +126,9 @@ exports.getDoctorById = async (req, res) => {
     }
 
     const doctor = await userModel
-      .findOne({ _id: id, role: "doctor" })
+      .findOne({ _id: id, role: "doctor"  })
       .select(
-        "name email phone location practice licenseNo experience institution qualification about photo isApproved"
+        "name email phone location practice licenseNo experience workplace institution qualification about photo isApproved"
       );
 
     if (!doctor) {
@@ -182,6 +184,7 @@ exports.getDoctorsBySpecialty = async (req, res) => {
         role: "doctor",
         practice: { $regex: new RegExp(`^${specialty}$`, "i") }, // Case-insensitive match
         isApproved: true,
+        isActive: true
       })
       .select("name phone location practice photo about");
 
@@ -235,7 +238,7 @@ exports.getDoctorsBySpecialty = async (req, res) => {
           reviews: formattedReviews,
         },
       };
-  });
+    });
 
     res.status(200).json({ success: true, doctors: formattedDoctors });
   } catch (error) {
@@ -283,52 +286,11 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// Get all doctors
-// exports.getAllDoctors = async (req, res) => {
-//   try {
-//     const doctors = await userModel
-//       .find({ role: "doctor", isApproved: true })
-//       .select("name phone location practice about photo institution experience qualification workplace");
-
-//     const formattedDoctors = doctors.map((doctor) => ({
-//       id: doctor._id,
-//       name: doctor.name,
-//       phone: doctor.phone,
-//       location: doctor.location,
-//       practice: doctor.practice,
-//       about: doctor.about,
-//       institution: doctor.institution,
-//       experience: doctor.experience,
-//       qualification: doctor.qualification,
-//       workplace: doctor.workplace,
-//       photo: doctor.photo?.data
-//         ? {
-//           contentType: doctor.photo.contentType,
-//           data: doctor.photo.data.toString("base64"),
-//         }
-//         : null,
-//     }));
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Doctors retrieved successfully",
-//       doctors: formattedDoctors,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching all doctors:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Error fetching doctors",
-//       error: error.message,
-//     });
-//   }
-// };
-
 // Get all doctors (most recent 4 for featured section)
 exports.getAllDoctors = async (req, res) => {
   try {
     const doctors = await userModel
-      .find({ role: "doctor", isApproved: true })
+      .find({ role: "doctor", isApproved: true, isActive: true })
       .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .limit(4) // Limit to 4 doctors
       .select("name phone location practice about photo institution experience qualification workplace");
@@ -346,9 +308,9 @@ exports.getAllDoctors = async (req, res) => {
       workplace: doctor.workplace,
       photo: doctor.photo?.data
         ? {
-            contentType: doctor.photo.contentType,
-            data: doctor.photo.data.toString("base64"),
-          }
+          contentType: doctor.photo.contentType,
+          data: doctor.photo.data.toString("base64"),
+        }
         : null,
     }));
 
@@ -455,6 +417,7 @@ exports.searchDoctor = async (req, res) => {
       _id: { $in: stringArray.map((id) => new mongoose.Types.ObjectId(id)) },
       role: "doctor",
       isApproved: true,
+      isActive: true
     };
     if (location) {
       query.location = { $regex: location, $options: "i" }; // Partial match
@@ -532,6 +495,81 @@ exports.searchDoctor = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error searching doctors",
+      error: error.message,
+    });
+  }
+};
+
+// Activate own doctor account
+exports.activateDoctorAccount = async (req, res) => {
+  try {
+    const userId = req.user.id; // From authenticated user
+
+    // Find the doctor (only the authenticated user with role: "doctor")
+    const doctor = await userModel.findOne({ _id: userId });
+    if (!doctor) {
+      return res.status(403).json({ success: false, message: "Not authorized. Doctor account required." });
+    }
+
+    // Check if already active
+    if (doctor.isActive) {
+      return res.status(400).json({ success: false, message: "Your account is already active" });
+    }
+
+    // Ensure the account is approved
+    if (!doctor.isApproved) {
+      return res.status(403).json({ success: false, message: "Cannot activate an unapproved account" });
+    }
+
+    // Activate the account
+    doctor.isActive = true;
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Your account has been activated successfully",
+    });
+  } catch (error) {
+    console.error("Error activating doctor account:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error activating your account",
+      error: error.message,
+    });
+  }
+};
+
+// Deactivate own doctor account
+exports.deactivateDoctorAccount = async (req, res) => {
+  try {
+    const userId = req.user.id; // From authenticated user
+
+    // Find the doctor (only the authenticated user with role: "doctor")
+    const doctor = await userModel.findOne({ _id: userId, role: "doctor" });
+    if (!doctor) {
+      return res.status(403).json({ success: false, message: "Not authorized. Doctor account required." });
+    }
+
+    // Check if already deactivated
+    if (!doctor.isActive) {
+      return res.status(400).json({ success: false, message: "Your account is already deactivated" });
+    }
+
+    // Deactivate the account
+    doctor.isActive = false;
+    await doctor.save();
+
+    // Instruct frontend to log out
+    res.status(200).json({
+      success: true,
+      message: "Your account has been deactivated successfully. Please log out.",
+      logout: true, // Signal to frontend to clear auth and redirect
+    });
+  } catch (error) {
+    console.error("Error deactivating doctor account:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deactivating your account",
       error: error.message,
     });
   }

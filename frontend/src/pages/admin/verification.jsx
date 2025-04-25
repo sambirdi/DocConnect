@@ -97,6 +97,48 @@ const Verification = () => {
       setLoading(true); // Show loading spinner during page change
     }
   };
+   // Helper to render certificate
+   const renderCertificate = (certificate) => {
+    if (!certificate || !certificate.data || !certificate.contentType) {
+      return <p className="text-gray-500">No certificate provided</p>;
+    }
+
+    const dataUrl = `data:${certificate.contentType};base64,${certificate.data}`;
+    
+    // For PDFs, provide a download link
+    if (certificate.contentType === "application/pdf") {
+      return (
+        <a
+          href={dataUrl}
+          download={`doctor_certificate.pdf`}
+          className="text-blue-500 hover:underline"
+        >
+          Download Certificate (PDF)
+        </a>
+      );
+    } 
+    // For images, display a preview
+    else if (certificate.contentType.startsWith("image/")) {
+      return (
+        <div>
+          <img
+            src={dataUrl}
+            alt="Doctor Certificate"
+            className="w-32 h-32 object-cover rounded"
+          />
+          {/* <a
+            href={dataUrl}
+            download={`doctor_certificate.${certificate.contentType.split("/")[1]}`}
+            className="text-blue-500 hover:underline mt-2 block"
+          >
+            Download Certificate
+          </a> */}
+        </div>
+      );
+    } else {
+      return <p className="text-gray-500">Unsupported certificate format</p>;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -125,16 +167,26 @@ const Verification = () => {
                     {notification.doctorId && (
                       <div className="mt-2">
                         <p>
-                          <strong>Doctor's Name:</strong> {notification.doctorId.name}
+                          <strong>Doctor's Name:</strong> {notification.doctor.name}
                         </p>
                         <p>
-                          <strong>Email:</strong> {notification.doctorId.email}
+                          <strong>Email:</strong> {notification.doctor.email}
                         </p>
                         <p>
-                          <strong>Phone:</strong> {notification.doctorId.phone}
+                          <strong>Phone:</strong> {notification.doctor.phone}
                         </p>
                         <p>
-                          <strong>License No:</strong> {notification.doctorId.licenseNo}
+                          <strong>License No:</strong> {notification.doctor.licenseNo}
+                        </p>
+                        <p>
+                          <strong>Practice:</strong> {notification.doctor.practice}
+                        </p>
+                        <p>
+                          <strong>Location:</strong> {notification.doctor.location}
+                        </p>
+                        <p>
+                          <strong>Certificate:</strong>{" "}
+                          {renderCertificate(notification.doctor.certificate)}
                         </p>
                       </div>
                     )}
@@ -146,7 +198,7 @@ const Verification = () => {
                           <>
                             <button
                               onClick={() =>
-                                handleAction(notification.doctorId._id, "approve", notification._id)
+                                handleAction(notification.doctorId, "approve", notification._id)
                               }
                               className="bg-green-500 text-white px-4 py-2 mr-2 rounded hover:bg-green-600"
                             >
@@ -154,7 +206,7 @@ const Verification = () => {
                             </button>
                             <button
                               onClick={() =>
-                                handleAction(notification.doctorId._id, "reject", notification._id)
+                                handleAction(notification.doctorId, "reject", notification._id)
                               }
                               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                             >

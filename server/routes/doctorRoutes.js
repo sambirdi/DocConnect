@@ -1,6 +1,9 @@
 const express = require('express');
-const { updateDocProfileController, docPhotoController, getDoctorById, getDoctorsBySpecialty, getAllDoctors, changePassword , searchDoctor} = require('../controllers/doctorController');  
-const { assignDoctorRole, authenticate } = require('../middleware/authMiddleware'); 
+const { updateDocProfileController,
+    docPhotoController, getDoctorById,
+    getDoctorsBySpecialty, getAllDoctors,
+    changePassword, searchDoctor, activateDoctorAccount, deactivateDoctorAccount } = require('../controllers/doctorController');
+const { authenticateAdmin, authenticate } = require('../middleware/authMiddleware');
 const formidable = require('express-formidable'); // for handling file uploads
 
 const router = express.Router();
@@ -17,5 +20,9 @@ router.get('/all-doctors', getAllDoctors);
 router.get("/search-doctor", searchDoctor);
 
 router.put('/change-password', authenticate, changePassword); // Change password
+
+// New routes for doctors to activate/deactivate their own accounts
+router.put('/account/activate', authenticate, activateDoctorAccount);
+router.put('/account/deactivate', authenticate, deactivateDoctorAccount);
 
 module.exports = router;

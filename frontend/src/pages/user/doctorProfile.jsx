@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, NavLink } from 'react-router-dom';
-import { FaBell } from 'react-icons/fa';
+import { FaSpinner, FaMapMarkerAlt, FaEdit, FaTrash } from 'react-icons/fa';
 import Header from '../../components/header/header';
 import Footer from '../../components/footer/footer';
 import ReviewModal from '../../components/review/review';

@@ -25,21 +25,23 @@ const Signup = () => {
     setLoading(true);
     setMessage("");
     setError("");
-
+  
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
       return;
     }
-
+  
     try {
-      await axios.post("http://localhost:5000/api/auth/register", formData);
-      setMessage("Account created successfully!");
+      const response = await axios.post("http://localhost:5000/api/auth/register", formData);
+      setMessage("OTP sent to your email. Please verify to complete registration.");
       setFormData({ name: "", email: "", password: "", confirmPassword: "" });
-
+  
       setTimeout(() => {
-        navigate("/login");
-      }, 2000); // Redirect after success message
+        navigate("/verify-otp", {
+          state: { userId: response.data.userId, email: formData.email },
+        });
+      }, 2000);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -168,7 +170,7 @@ const Signup = () => {
             {/* Sign Up Button */}
             <button
               type="submit"
-              className="w-full bg-navy text-white py-3 rounded-md hover:bg-blue-700 transition"
+              className="w-full bg-navy text-white py-3 rounded-md hover:bg-navy/80 transition"
               disabled={loading}
             >
               {loading ? "Creating Account..." : "Sign Up"}

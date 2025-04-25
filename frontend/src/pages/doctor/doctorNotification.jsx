@@ -99,27 +99,26 @@ const DoctorNotification = () => {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-base text-gray-800">
-                      {notification.message}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Rating: {notification.reviewId.rating}/5
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      "{notification.reviewId.reviewText.length > 100
-                        ? `${notification.reviewId.reviewText.substring(0, 100)}...`
-                        : notification.reviewId.reviewText}"
-                    </p>
+                    <p className="text-base text-gray-800">{notification.message}</p>
+                    {notification.reviewId ? (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Rating: {notification.reviewId.rating}/5
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          "{notification.reviewId.reviewText.length > 100
+                            ? `${notification.reviewId.reviewText.substring(0, 100)}...`
+                            : notification.reviewId.reviewText}"
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-600">No review details available</p>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500">
                     {formatTimestamp(notification.createdAt)}
                   </p>
                 </div>
-                {/* {!notification.isRead && (
-                  <span className="inline-block mt-2 text-xs text-blue-600">
-                    Unread
-                  </span>
-                )} */}
               </div>
             ))}
           </div>

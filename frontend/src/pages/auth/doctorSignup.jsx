@@ -12,16 +12,21 @@ const ListYourPractice = () => {
     password: "",
     licenseNo: "",
   });
-
+  const [certificate, setCertificate] = useState(null); // State for certificate file
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  // Handle form field changes
+  // Handle text field changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Handle file input change
+  const handleFileChange = (e) => {
+    setCertificate(e.target.files[0]);
   };
 
   // Handle form submission
@@ -31,9 +36,27 @@ const ListYourPractice = () => {
     setMessage("");
     setError("");
 
+    // Create FormData object for multipart form submission
+    const data = new FormData();
+    data.append("name", formData.name);
+    data.append("email", formData.email);
+    data.append("phone", formData.phone);
+    data.append("practice", formData.practice);
+    data.append("location", formData.location);
+    data.append("password", formData.password);
+    data.append("licenseNo", formData.licenseNo);
+    data.append("role", "doctor"); // Ensure role is set to doctor
+    if (certificate) {
+      data.append("certificate", certificate);
+    }
+
     try {
-      await axios.post("http://localhost:5000/api/auth/docregister", formData);
-      setMessage("Your practice has been successfully listed!");
+      await axios.post("http://localhost:5000/api/auth/docregister", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setMessage("Your practice has been successfully listed! Please verify your email.");
       setFormData({
         name: "",
         email: "",
@@ -41,8 +64,9 @@ const ListYourPractice = () => {
         practice: "",
         location: "",
         password: "",
-        licenseNo:"",
+        licenseNo: "",
       });
+      setCertificate(null); // Reset certificate file
 
       // Redirect to login page after success
       setTimeout(() => {
@@ -88,28 +112,25 @@ const ListYourPractice = () => {
             <p className="text-red-500 text-center font-medium">{error}</p>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* First and Last Name */}
-            <div className="flex flex-col sm:flex-row sm:space-x-4">
-              <div className="w-full">
-                <label
-                  htmlFor="name"
-                  className="block text-gray-700 font-medium mb-1"
-                >
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-
+          <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
+            {/* Full Name */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-gray-700 font-medium mb-1"
+              >
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="John Doe"
+                required
+              />
             </div>
 
             {/* Email */}
@@ -171,7 +192,8 @@ const ListYourPractice = () => {
                 required
               />
             </div>
-            {/* License NO */}
+
+            {/* License No */}
             <div>
               <label
                 htmlFor="licenseNo"
@@ -227,6 +249,25 @@ const ListYourPractice = () => {
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            {/* Certificate Upload */}
+            <div>
+              <label
+                htmlFor="certificate"
+                className="block text-gray-700 font-medium mb-1"
+              >
+                Certificate/ID
+              </label>
+              <input
+                type="file"
+                id="certificate"
+                name="certificate"
+                onChange={handleFileChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                accept=".pdf,.jpg,.jpeg,.png"
                 required
               />
             </div>

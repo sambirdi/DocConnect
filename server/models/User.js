@@ -9,10 +9,22 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   confirmPassword : {type: String},
-  phone: { type: String},
+  phone: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        return /^\d{10}$/.test(v); // Must be exactly 10 digits
+      },
+      message: props => `${props.value} is not a valid 10-digit phone number!`
+    }
+  },
   practice: { type: String},
   location: { type: String},
-  licenseNo: {type: String},
+  licenseNo: {
+    type: String,
+    unique: true,
+    sparse: true // Allows uniqueness check only when licenseNo is present
+  },
   about: {type: String},
   institution: {type: String},
   experience: {type: String},
@@ -27,7 +39,18 @@ const userSchema = new mongoose.Schema({
     data: Buffer, 
     contentType: String, 
   },
+  certificate: {
+    data: Buffer, 
+    contentType: String, 
+  },
   isApproved: { type: Boolean, default: false }, // New field for approval status
+  isFirstLogin: { type: Boolean, default: false }, // Default false, only true for admin-added senior doctors
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationOTP: { type: String },
+  verificationOTPExpires: { type: Date },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 },  { timestamps: true }// Add timestamps here

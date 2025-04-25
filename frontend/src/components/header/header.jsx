@@ -202,9 +202,8 @@ const Header = () => {
                       {notifications.slice(0, 3).map((notification) => (
                         <div
                           key={notification._id}
-                          className={`px-4 py-3 text-gray-800 hover:bg-gray-100 cursor-pointer ${
-                            !notification.isRead ? "font-semibold" : ""
-                          }`}
+                          className={`px-4 py-3 text-gray-800 hover:bg-gray-100 cursor-pointer ${!notification.isRead ? "font-semibold" : ""
+                            }`}
                           onClick={() => {
                             if (!notification.isRead) {
                               markAsRead(notification._id);
@@ -214,15 +213,19 @@ const Header = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="text-sm">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                Rating: {notification.reviewId.rating}/5
-                              </p>
-                              <p className="text-xs text-gray-600 truncate max-w-[200px]">
-                                "{notification.reviewId.reviewText}"
-                              </p>
+                              <p className="text-sm">{notification.message}</p>
+                              {notification.reviewId ? (
+                                <>
+                                  <p className="text-xs text-gray-600">
+                                    Rating: {notification.reviewId.rating}/5
+                                  </p>
+                                  <p className="text-xs text-gray-600 truncate max-w-[200px]">
+                                    "{notification.reviewId.reviewText}"
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-gray-600">No review details available</p>
+                              )}
                             </div>
                             <p className="text-xs text-gray-500">
                               {formatTimestamp(notification.createdAt)}
@@ -276,13 +279,12 @@ const Header = () => {
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white text-black border border-gray-300 rounded-lg shadow-md z-50">
                   <NavLink
-                    to={`/dashboard/${
-                      auth.user.role === "admin"
+                    to={`/dashboard/${auth.user.role === "admin"
                         ? "admin"
                         : auth.user.role === "doctor"
-                        ? "doctor"
-                        : "user"
-                    }`}
+                          ? "doctor"
+                          : "user"
+                      }`}
                     className="flex items-center gap-2 px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-lg"
                   >
                     <FiUser className="text-lg" /> Profile

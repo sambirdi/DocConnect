@@ -90,7 +90,8 @@ const AddSeniorDoc = () => {
       data.append("practice", formData.practice);
       data.append("location", formData.location);
       data.append("licenseNo", formData.licenseNo);
-      data.append("about", formData.about);
+      data.append("experience", formData.experience);
+       data.append("about", formData.about);
       if (photo) {
         data.append("photo", photo);
       }

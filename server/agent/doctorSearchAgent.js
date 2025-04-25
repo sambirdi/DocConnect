@@ -25,7 +25,8 @@ const systemContent = `
        - "teeth pain", "toothache", "gum bleeding", "cavity" → Dentist
        - "skin rash", "itchy skin", "skin dark spots", "pimples"  → Dermatologist
        - "headache", "dizziness", "fever", "stomachache", "body pain", "cough" → General Physician
-       - "eye pain", "teary eyes", "dry eyes", "blurry vision", "headache" → Ophthalmologists 
+       - "eye pain", "teary eyes", "dry eyes", "blurry vision", "headache" → Ophthalmologists
+       - "irregular periods", "missed period", "heavy bleeding", "pelvic pain", "vaginal discharge", "pain during intercourse", "menstrual cramps", "pregnancy symptoms" → Gynecologist
        - Other symptoms → General Physician (if no specific match)
 
       - If input matches a specialist name (e.g., "Cardiologist"), directly filter doctors by that specialty.

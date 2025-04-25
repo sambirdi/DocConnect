@@ -26,6 +26,7 @@ import SearchResults from "./pages/SearchResults";
 import AdminSetting from './pages/admin/adminSetting';
 import AddSeniorDoc from './pages/settings/AddSeniorDoc';
 import DoctorNotification from './pages/doctor/doctorNotification';
+import VerifyOTP from './pages/auth/VerifyOTP';
 
 
 
@@ -42,6 +43,7 @@ const App = () => {
         <Route path="/About" element={<AboutUs />} />
         <Route path="/doctor-profile" element={<Profile />} />
         <Route path="/search-results" element={<SearchResults />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
         {/* <Route path="/profile" element={<Profile />} /> */}
         <Route path="/doctor/:id" element={<Profile />} />
         <Route path="/browse" element={< BrowseSpecialties/>} />
