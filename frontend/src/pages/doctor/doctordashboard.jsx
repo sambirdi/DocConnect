@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from "../../context/auth";
 import axios from 'axios';
 import { FiMail, FiMapPin, FiPhone } from "react-icons/fi";
@@ -14,8 +14,8 @@ export default function DoctorDashboard() {
     const [error, setError] = useState(null);
     const [photoUrl, setPhotoUrl] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [isActive, setIsActive] = useState(false); // Track account active status
-    const [statusLoading, setStatusLoading] = useState(false); // Loading for activate/deactivate
+    const [isActive, setIsActive] = useState(false);
+    const [statusLoading, setStatusLoading] = useState(false);
     const location = useLocation();
     const DEFAULT_PHOTO = "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg";
     
@@ -30,8 +30,15 @@ export default function DoctorDashboard() {
         return params.get('tab') || 'about';
     });
 
+    const [successDialog, setSuccessDialog] = useState({
+        isOpen: false,
+        message: '',
+        isError: false,
+        onClose: null
+    });
+
     // Fetch user photo
-    const fetchPhoto = async (userId) => {
+    const fetchPhoto = useCallback(async (userId) => {
         if (!auth?.token || !userId) {
             setPhotoUrl(DEFAULT_PHOTO);
             return;
@@ -52,7 +59,7 @@ export default function DoctorDashboard() {
             console.error('Error fetching photo:', error.response?.status, error.message);
             setPhotoUrl(DEFAULT_PHOTO);
         }
-    };
+    }, [auth?.token]);
 
     // Fetch user info and account status
     useEffect(() => {
@@ -76,7 +83,7 @@ export default function DoctorDashboard() {
             }
         };
         fetchUserInfoAndPhoto();
-    }, [auth.token]);
+    }, [auth.token, fetchPhoto]);
 
     // Handle profile update
     const handleProfileUpdate = (updatedUser, newPhotoUrl) => {
@@ -129,25 +136,32 @@ export default function DoctorDashboard() {
             if (response.data.success) {
                 setIsActive(false);
                 setUser((prev) => ({ ...prev, isActive: false }));
-                setAuth((prev) => ({
-                    ...prev,
-                    user: { ...prev.user, isActive: false },
-                }));
-                if (response.data.logout) {
-                    setAuth({ token: null, user: null });
-                    localStorage.removeItem('auth');
-                    navigate('/login');
-                    // alert('Account deactivated successfully! You have been logged out.');
-                } else {
-                    alert('Account deactivated successfully!');
-                }
+                
+                // Show success modal first
+                setSuccessDialog({
+                    isOpen: true,
+                    message: 'Account deactivated successfully! You will be logged out.',
+                    onClose: () => {
+                        setSuccessDialog({ isOpen: false, message: '', onClose: null });
+                        // Clear auth state and local storage after modal is closed
+                        setAuth({ token: null, user: null });
+                        localStorage.removeItem('auth');
+                        navigate('/login');
+                    }
+                });
             }
         } catch (error) {
             console.error('Error deactivating account:', error.response?.data);
             const message = error.response?.data?.message || 'Failed to deactivate account. Please ensure you are logged in as a doctor.';
-            alert(message);
+            setSuccessDialog({
+                isOpen: true,
+                message: message,
+                isError: true,
+                onClose: () => setSuccessDialog({ isOpen: false, message: '', isError: false, onClose: null })
+            });
         } finally {
             setStatusLoading(false);
+            closeConfirmDialog();
         }
     };
 
@@ -162,9 +176,9 @@ export default function DoctorDashboard() {
     };
 
     // Handle confirmation
-    const handleConfirmAction = () => {
+    const handleConfirmAction = async () => {
         if (confirmDialog.action === 'deactivate') {
-            handleDeactivateAccount();
+            await handleDeactivateAccount();
         }
         closeConfirmDialog();
     };
@@ -194,7 +208,7 @@ export default function DoctorDashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-            <div className="bg-gradient-to-br from-navy/90 to-gray-700 relative">
+      <div className="bg-navy">
                 <Header />
             </div>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -250,6 +264,10 @@ export default function DoctorDashboard() {
                                         <span>{user?.workplace}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <span className="font-medium text-navy/90">Gender:</span>
+                                        <span>{user?.gender}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <span className="font-medium text-navy/90">Account Status:</span>
                                         <span className={isActive ? 'text-green-600' : 'text-red-600'}>
                                             {isActive ? 'Active' : 'Inactive'}
@@ -282,10 +300,10 @@ export default function DoctorDashboard() {
                         </div>
                     </div>
 
-                    {/* Right Side - Tabbed Content */}
+                    {/* Right Side - Content */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 min-h-[500px]">
-                            <nav className="flex gap-2 p-6 bg-gray-50 border-b border-gray-200">
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                            <nav className="flex gap-2 p-6 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                                 <button
                                     onClick={() => setActiveTab("about")}
                                     className={`px-8 py-3 rounded-full font-medium transition-all duration-300 text-base ${activeTab === "about" ? "bg-navy/90 text-white shadow-md" : "text-navy/90 hover:bg-navy/20"}`}
@@ -340,28 +358,82 @@ export default function DoctorDashboard() {
                 </div>
             </div>
 
+            {/* Success/Error Dialog */}
+            {successDialog.isOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 transform transition-all scale-100 opacity-100">
+                        <div className="text-center">
+                            {/* Icon */}
+                            <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full ${successDialog.isError ? 'bg-red-100' : 'bg-green-100'} mb-6`}>
+                                {successDialog.isError ? (
+                                    <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                ) : (
+                                    <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
+                            
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                                {successDialog.isError ? 'Error' : 'Success'}
+                            </h2>
+                            <p className="text-gray-600 mb-8">
+                                {successDialog.message}
+                            </p>
+                            
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={successDialog.onClose}
+                                    className={`px-6 py-3 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
+                                        successDialog.isError 
+                                        ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' 
+                                        : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                                    }`}
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Custom Confirmation Dialog */}
             {confirmDialog.isOpen && (
-                <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm transform transition-all">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Deactivate Account</h2>
-                        <p className="text-gray-600 mb-6">
-                            Are you sure you want to deactivate your account?
-                            <span className="block text-sm text-red-500 mt-1">This action will log you out of the system.</span>
-                        </p>
-                        <div className="flex justify-end space-x-3">
-                            <button
-                                onClick={closeConfirmDialog}
-                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConfirmAction}
-                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-300"
-                            >
-                                Deactivate
-                            </button>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4 transform transition-all">
+                        <div className="text-center">
+                            {/* Warning Icon */}
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                                <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Deactivate Account</h2>
+                            <p className="text-gray-600 mb-2">
+                                Are you sure you want to deactivate your account?
+                            </p>
+                            <p className="text-sm text-red-500 mb-8">
+                                This action will log you out of the system.
+                            </p>
+                            
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={closeConfirmDialog}
+                                    className="flex-1 px-6 py-3 bg-white text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmAction}
+                                    className="flex-1 px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all"
+                                >
+                                    Deactivate
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

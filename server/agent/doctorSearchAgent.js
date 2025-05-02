@@ -27,6 +27,7 @@ const systemContent = `
        - "headache", "dizziness", "fever", "stomachache", "body pain", "cough" → General Physician
        - "eye pain", "teary eyes", "dry eyes", "blurry vision", "headache" → Ophthalmologists
        - "irregular periods", "missed period", "heavy bleeding", "pelvic pain", "vaginal discharge", "pain during intercourse", "menstrual cramps", "pregnancy symptoms" → Gynecologist
+       - "child fever", "child cough", "baby not eating", "child not sleeping", "baby vomiting", "child diarrhea", "newborn vaccination", "infant crying a lot", "child rash", "slow growth in child" → Pediatrician
        - Other symptoms → General Physician (if no specific match)
 
       - If input matches a specialist name (e.g., "Cardiologist"), directly filter doctors by that specialty.

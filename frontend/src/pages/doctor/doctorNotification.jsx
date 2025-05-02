@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/auth";
 import axios from "axios";
 import Header from "../../components/header/header";
+import { useNavigate } from "react-router-dom";
 
 const DoctorNotification = () => {
   const [auth] = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch notifications on mount
   useEffect(() => {
@@ -21,6 +23,7 @@ const DoctorNotification = () => {
             },
           });
           if (response.data.success) {
+            console.log('Fetched notifications:', response.data.notifications);
             setNotifications(response.data.notifications);
           } else {
             setError("Failed to load notifications");
@@ -39,6 +42,34 @@ const DoctorNotification = () => {
 
     fetchNotifications();
   }, [auth]);
+
+  // Mark notification as read and handle navigation
+  const handleNotificationClick = async (notification) => {
+    try {
+      console.log('Notification clicked:', notification);
+      console.log('Auth user:', auth.user);
+      
+      // Mark as read if not already read
+      if (!notification.isRead) {
+        await markAsRead(notification._id);
+      }
+      
+      // If notification has a reviewId, navigate to the doctor's profile
+      if (notification.reviewId) {
+        // Try to get the doctor ID from different possible sources
+        const doctorId = notification.doctorId || auth.user._id || auth.user.id;
+        console.log('Doctor ID being used:', doctorId);
+        
+        if (!doctorId) {
+          console.error("Doctor ID not found in notification or auth context");
+          return;
+        }
+        navigate(`/doctor/${doctorId}`);
+      }
+    } catch (err) {
+      console.error("Error handling notification click:", err);
+    }
+  };
 
   // Mark notification as read
   const markAsRead = async (notificationId) => {
@@ -93,9 +124,8 @@ const DoctorNotification = () => {
             {notifications.map((notification) => (
               <div
                 key={notification._id}
-                className={`p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 cursor-pointer transition ${!notification.isRead ? "font-semibold bg-gray-50" : ""
-                  }`}
-                onClick={() => !notification.isRead && markAsRead(notification._id)}
+                className={`p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 cursor-pointer transition ${!notification.isRead ? "font-semibold bg-gray-50" : ""}`}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex justify-between items-start">
                   <div>

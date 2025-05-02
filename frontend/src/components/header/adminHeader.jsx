@@ -21,8 +21,8 @@ const AdminHeader = () => {
                     }
                 });
 
-                if (response.data.success) {
-                    setUnreadCount(response.data.count);
+                if (response.data.unreadCount !== undefined) {
+                    setUnreadCount(response.data.unreadCount);
                 }
             } catch (error) {
                 console.error('Error fetching unread notification count:', error);
@@ -30,8 +30,8 @@ const AdminHeader = () => {
         };
 
         fetchUnreadCount();
-        // Set up polling to refresh count every 30 seconds
-        const interval = setInterval(fetchUnreadCount, 30000);
+        // Set up polling to refresh count every 10 seconds instead of 30
+        const interval = setInterval(fetchUnreadCount, 10000);
         return () => clearInterval(interval);
     }, [auth?.token]);
 

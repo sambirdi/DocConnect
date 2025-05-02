@@ -230,6 +230,22 @@ export default function UpdateProfile({ user, onProfileUpdate }) {
                             placeholder="Enter your location"
                         />
                     </div>
+                    <div>
+                        <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <select
+                            name="gender"
+                            id="gender"
+                            value={formData.gender || ''}
+                            onChange={handleChange}
+                            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:ring-navy/60 transition duration-200"
+                        >
+                           <option value="" disabled>Select your gender</option>
+                           <option value="Male">Male</option>
+                           <option value="Female">Female</option>
+                           <option value="Other">Other</option>
+                        </select>
+                    </div>
+
                     <div className="sm:col-span-2">
                         <label htmlFor="about" className="block text-sm font-medium text-gray-700 mb-1">About Me</label>
                         <textarea

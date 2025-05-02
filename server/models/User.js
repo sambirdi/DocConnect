@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema({
   experience: {type: String},
   qualification: {type: String},
   workplace: {type: String},
+  latitude: { type: Number, default: null },
+  longitude: { type: Number, default: null },
   role: {
     type: String,
     enum: ["doctor", "patient", "admin"], // Allowed roles
@@ -44,6 +46,7 @@ const userSchema = new mongoose.Schema({
     contentType: String, 
   },
   isApproved: { type: Boolean, default: false }, // New field for approval status
+  isActive: { type: Boolean, default: true }, // New field for approval status
   isFirstLogin: { type: Boolean, default: false }, // Default false, only true for admin-added senior doctors
   isVerified: {
     type: Boolean,

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-chatbot-kit": "^2.2.2",
+    "tesseract.js": "^6.0.1"
+  }
+}

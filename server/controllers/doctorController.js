@@ -1,14 +1,15 @@
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/User");
-const reviewModel = require("../models/Reviews");
+const reviewModel = require("../models/reviews");
 const JWT = require("jsonwebtoken");
 const crypto = require("crypto");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const fs = require("fs");
+const axios = require("axios");
 const { agentBuilder } = require("../agent/doctorSearchAgent");
 
-// update profile
+// Update profile
 exports.updateDocProfileController = async (req, res) => {
   try {
     const {
@@ -33,7 +34,7 @@ exports.updateDocProfileController = async (req, res) => {
 
     // Check if a photo was uploaded
     const photo = req.files?.photo;
-    // Update user information
+    // Prepare updated fields
     const updatedFields = {
       name: name || user.name,
       phone: phone || user.phone,
@@ -56,6 +57,38 @@ exports.updateDocProfileController = async (req, res) => {
         photo.path,
         (err) => err && console.error("Failed to delete temp file:", err)
       );
+    }
+
+    // Geocode workplace if it has changed
+    if (workplace && workplace !== user.workplace) {
+      console.log(`Geocoding workplace for ${user.name}: ${workplace}`);
+      try {
+        const response = await axios.get(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            `${workplace}, Kathmandu, Nepal`
+          )}`,
+          { headers: { 'User-Agent': 'DoctorFinder/1.0 (contact@doctorfinder.com)' } }
+        );
+
+        if (response.data.length > 0) {
+          const { lat, lon } = response.data[0];
+          updatedFields.latitude = parseFloat(lat);
+          updatedFields.longitude = parseFloat(lon);
+          // console.log(`Updated coordinates for ${user.name}: lat=${lat}, lon=${lon}`);
+        } else {
+          console.warn(`No coordinates found for workplace: ${workplace}`);
+          // Optionally, set latitude and longitude to null or leave unchanged
+          updatedFields.latitude = null;
+          updatedFields.longitude = null;
+        }
+      } catch (geocodeError) {
+        // console.error(`Geocoding error for ${workplace}:`, geocodeError.message);
+        // Optionally, set latitude and longitude to null or leave unchanged
+        updatedFields.latitude = null;
+        updatedFields.longitude = null;
+      }
+      // Respect Nominatim rate limit (1 request per second)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     const updatedUser = await userModel.findByIdAndUpdate(
@@ -126,9 +159,9 @@ exports.getDoctorById = async (req, res) => {
     }
 
     const doctor = await userModel
-      .findOne({ _id: id, role: "doctor"  })
+      .findOne({ _id: id, role: "doctor" })
       .select(
-        "name email phone location practice licenseNo experience workplace institution qualification about photo isApproved"
+        "name email phone location practice licenseNo experience workplace institution qualification about photo isApproved latitude longitude"
       );
 
     if (!doctor) {
@@ -141,11 +174,11 @@ exports.getDoctorById = async (req, res) => {
     const photoData =
       doctor.photo && doctor.photo.data
         ? {
-          contentType: doctor.photo.contentType || "image/png",
-          data: Buffer.isBuffer(doctor.photo.data)
-            ? doctor.photo.data.toString("base64")
-            : doctor.photo.data,
-        }
+            contentType: doctor.photo.contentType || "image/png",
+            data: Buffer.isBuffer(doctor.photo.data)
+              ? doctor.photo.data.toString("base64")
+              : doctor.photo.data,
+          }
         : null;
 
     const doctorData = {
@@ -161,6 +194,8 @@ exports.getDoctorById = async (req, res) => {
       qualification: doctor.qualification,
       about: doctor.about,
       workplace: doctor.workplace,
+      latitude: doctor.latitude,
+      longitude: doctor.longitude,
       isApproved: doctor.isApproved,
       photo: photoData,
     };
@@ -362,18 +397,29 @@ exports.searchDoctor = async (req, res) => {
     // Log for debugging
     // console.log("Raw agentBuilder response:", response);
 
-    // Clean response
+    // Enhanced response cleaning
     let cleanedResponse = response
-      .replace(/^```json\n/, "")
-      .replace(/\n```$/, "")
+      .replace(/```json\n?/, "") // Remove ```json
+      .replace(/\n?```/, "") // Remove closing ```
+      .replace(/^\s*[\{\[]\s*/, "") // Remove leading { or [
+      .replace(/\s*[\]\}]\s*$/, "") // Remove trailing ] or }
       .trim();
+
+    // If response is empty or not an array, return empty array
+    if (!cleanedResponse || cleanedResponse === "[]") {
+      return res.status(200).json({
+        success: true,
+        message: "No doctors found for the given symptoms",
+        data: [],
+      });
+    }
 
     // console.log("Cleaned response:", cleanedResponse);
 
     let stringArray = [];
     try {
-      // Try parsing as JSON
-      stringArray = JSON.parse(cleanedResponse);
+      // Try parsing as JSON array
+      stringArray = JSON.parse(`[${cleanedResponse}]`);
       // Ensure it's an array and contains valid ObjectIds
       if (!Array.isArray(stringArray)) {
         throw new Error("Response is not an array");
@@ -383,7 +429,7 @@ exports.searchDoctor = async (req, res) => {
       );
     } catch (error) {
       console.error("Error parsing string array:", error);
-      // Fallback: try parsing raw response or assume empty
+      // Fallback: try parsing raw response or extract IDs manually
       try {
         stringArray = JSON.parse(response);
         if (!Array.isArray(stringArray)) {
@@ -393,12 +439,20 @@ exports.searchDoctor = async (req, res) => {
           mongoose.Types.ObjectId.isValid(id)
         );
       } catch (fallbackError) {
-        // console.error("Fallback parsing failed:", fallbackError);
-        return res.status(200).json({
-          success: true,
-          message: "No doctors found due to invalid response format",
-          data: [],
-        });
+        // Manual extraction of ObjectIds using regex
+        const idRegex = /[0-9a-fA-F]{24}/g;
+        stringArray = response.match(idRegex) || [];
+        stringArray = stringArray.filter((id) =>
+          mongoose.Types.ObjectId.isValid(id)
+        );
+        if (stringArray.length === 0) {
+          console.error("Fallback parsing failed:", fallbackError);
+          return res.status(200).json({
+            success: true,
+            message: "No doctors found due to invalid response format",
+            data: [],
+          });
+        }
       }
     }
 
@@ -420,7 +474,7 @@ exports.searchDoctor = async (req, res) => {
       isActive: true
     };
     if (location) {
-      query.location = { $regex: location, $options: "i" }; // Partial match
+      query.location = { $regex: location, $options: "i" };
     }
 
     const doctors = await userModel.find(query).select(
@@ -434,15 +488,12 @@ exports.searchDoctor = async (req, res) => {
       .populate("patientId", "name")
       .select("doctorId rating reviewText createdAt");
 
-
     // Format response
     const formattedDoctors = doctors.map((doc) => {
-      // Filter reviews for this doctor
       const doctorReviews = reviews.filter((review) =>
         review.doctorId.equals(doc._id)
       );
 
-      // Calculate average rating
       const totalReviews = doctorReviews.length;
       const averageRating =
         totalReviews > 0
@@ -452,7 +503,6 @@ exports.searchDoctor = async (req, res) => {
           ).toFixed(1)
           : 0;
 
-      // Format reviews
       const formattedReviews = doctorReviews.map((review) => ({
         patientName: review.patientId.name,
         rating: review.rating,

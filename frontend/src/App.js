@@ -27,6 +27,7 @@ import AdminSetting from './pages/admin/adminSetting';
 import AddSeniorDoc from './pages/settings/AddSeniorDoc';
 import DoctorNotification from './pages/doctor/doctorNotification';
 import VerifyOTP from './pages/auth/VerifyOTP';
+import FlaggedReviews from './pages/admin/flaggedReviews';
 
 
 
@@ -61,6 +62,7 @@ const App = () => {
           <Route path="verification" element={<Verification/>} />
           <Route path="settings" element={<AdminSetting/>} />
           <Route path="add-Senior" element={<AddSeniorDoc/>} />
+          <Route path="settings/flagged-reviews" element={<FlaggedReviews />} />
 
         </Route>
 

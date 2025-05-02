@@ -8,6 +8,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const patientRoutes = require('./routes/patientRoutes')
 const docNotiRoute = require('./routes/docNotiRoutes');
+const chatbotRoute = require('./routes/chatbotRoute');
+const flaggedReviewRoutes = require('./routes/flaggedReviewRoutes');
 
 const app = express();
 
@@ -29,6 +31,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/doctor', doctorRoutes);
 app.use('/api/patient', patientRoutes);
 app.use('/api/doc-notification', docNotiRoute);
+app.use('/api/chatbot',chatbotRoute);
+console.log('Type of flaggedReviewRoutes:', typeof flaggedReviewRoutes);
+console.log('flaggedReviewRoutes contents:', flaggedReviewRoutes);
+app.use('/api/reviews', flaggedReviewRoutes);
 
 const PORT = process.env.PORT || 5000;
 
