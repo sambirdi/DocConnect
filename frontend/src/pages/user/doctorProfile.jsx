@@ -295,7 +295,7 @@ const Profile = () => {
     }
 
     // Map configuration
-    const GOOGLE_MAPS_API_KEY = "AIzaSyCR_7wZGIOrt6R-L1ff_aG8hVq3TTuAao4";
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
     const mapContainerStyle = {
         width: '100%',
         height: '400px',
