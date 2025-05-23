@@ -1,4 +1,4 @@
-const reviewModel = require('../models/Reviews');
+const reviewModel = require('../models/reviews');
 const userModel = require('../models/User');
 const mongoose = require('mongoose');
 const { createNotification } = require('./docNotiController');
@@ -88,13 +88,16 @@ exports.getDoctorReviewsController = async (req, res) => {
       ? (reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews).toFixed(1)
       : 0;
 
-    const formattedReviews = reviews.map(review => ({
-      _id: review._id,
-      patientName: review.patientId.name,
-      rating: review.rating,
-      reviewText: review.reviewText,
-      createdAt: review.createdAt,
-    }));
+    // Map reviews, handling null patientId
+    const formattedReviews = reviews
+      .filter(review => review.patientId) // Skip reviews with null patientId
+      .map(review => ({
+        _id: review._id,
+        patientName: review.patientId.name,
+        rating: review.rating,
+        reviewText: review.reviewText,
+        createdAt: review.createdAt,
+      }));
 
     res.status(200).json({
       success: true,
@@ -187,4 +190,130 @@ exports.deleteDocReviewController = async (req, res) => {
       error: error.message,
     });
   }
+};
+// Activate own patient account
+exports.activatePatientAccount = async (req, res) => {
+  try {
+    const userId = req.user.id; // From authenticated user
+
+    // Find the patient (only the authenticated user with role: "patient")
+    const patient = await userModel.findOne({ _id: userId, role: "patient" });
+    if (!patient) {
+      return res.status(403).json({ success: false, message: "Not authorized. Patient account required." });
+    }
+
+    // Check if already active
+    if (patient.isActive) {
+      return res.status(400).json({ success: false, message: "Your account is already active" });
+    }
+
+    // Activate the account
+    patient.isActive = true;
+    await patient.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Your account has been activated successfully",
+    });
+  } catch (error) {
+    console.error("Error activating patient account:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error activating your account",
+      error: error.message,
+    });
+  }
+};
+
+// Deactivate own patient account
+exports.deactivatePatientAccount = async (req, res) => {
+  try {
+    console.log("req.user in deactivatePatientAccount:", req.user); // Debug log
+    const userId = req.user.id; // From authenticated user
+
+    // Find the patient (only the authenticated user with role: "patient")
+    const patient = await userModel.findOne({ _id: userId, role: "patient" });
+    if (!patient) {
+      return res.status(403).json({ success: false, message: "Not authorized. Patient account required." });
+    }
+
+    // Check if already deactivated
+    if (!patient.isActive) {
+      return res.status(400).json({ success: false, message: "Your account is already deactivated" });
+    }
+
+    // Deactivate the account
+    patient.isActive = false;
+    await patient.save();
+
+    // Instruct frontend to log out
+    res.status(200).json({
+      success: true,
+      message: "Your account has been deactivated successfully. Please log out.",
+      logout: true, // Signal to frontend to clear auth and redirect
+    });
+  } catch (error) {
+    console.error("Error deactivating patient account:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deactivating your account",
+      error: error.message,
+    });
+  }
+};
+// In patientController.js
+exports.updatePatientProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name, email, phone, location } = req.body;
+
+        const patient = await userModel.findOne({ _id: userId, role: "patient" });
+        if (!patient) {
+            return res.status(403).json({ success: false, message: "Not authorized. Patient account required." });
+        }
+
+        if (email && email !== patient.email) {
+            const existingUser = await userModel.findOne({ email, _id: { $ne: userId } });
+            if (existingUser) {
+                return res.status(400).json({ success: false, message: "Email is already in use by another account." });
+            }
+        }
+
+        if (name) patient.name = name;
+        if (email) patient.email = email;
+        if (phone) patient.phone = phone;
+        if (location) patient.location = location;
+
+        await patient.save();
+
+        const updatedUser = {
+            _id: patient._id,
+            name: patient.name,
+            email: patient.email,
+            phone: patient.phone,
+            location: patient.location,
+            role: patient.role,
+            isActive: patient.isActive,
+        };
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            updatedUser,
+        });
+    } catch (error) {
+        console.error("Error updating patient profile:", error);
+        if (error.name === 'ValidationError') {
+            const message = Object.values(error.errors).map(err => err.message).join(', ');
+            return res.status(400).json({
+                success: false,
+                message: message || "Validation error",
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: "Error updating profile",
+            error: error.message,
+        });
+    }
 };

@@ -64,26 +64,26 @@ exports.adminApproveRejectDoctor = async (req, res) => {
       return res.status(400).json({ message: "Doctor not found or invalid role." });
     }
 
-    const notification = await Notification.findOne({ doctorId: doctor._id, read: false });
+    const notification = await Notification.findOne({ doctorId: doctor._id, type: 'doctor_registration', status: 'pending' });
     if (!notification) {
-      return res.status(404).json({ message: "Notification not found." });
+      return res.status(404).json({ message: "Pending notification not found for this doctor." });
     }
 
     if (action === 'approve') {
       doctor.isApproved = true;
       await doctor.save();
       notification.message = `Doctor ${doctor.name} has been approved.`;
-      notification.read = true;
+      notification.status = 'approved';
       await notification.save();
       await sendDoctorStatusEmail(doctor.email, 'approved');
-      return res.status(200).json({ message: "Doctor has been approved successfully." });
+      return res.status(200).json({ message: "Doctor has been approved successfully.", notification });
     } else if (action === 'reject') {
       await doctor.deleteOne();
       notification.message = `Doctor ${doctor.name} has been rejected.`;
-      notification.read = true;
+      notification.status = 'rejected';
       await notification.save();
       await sendDoctorStatusEmail(doctor.email, 'rejected');
-      return res.status(200).json({ message: "Doctor registration has been rejected." });
+      return res.status(200).json({ message: "Doctor registration has been rejected.", notification });
     } else {
       return res.status(400).json({ message: "Invalid action. Must be either 'approve' or 'reject'." });
     }
@@ -103,14 +103,29 @@ exports.getAllNotifications = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
+    const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
 
-    // Fetch doctor registration notifications
-    const doctorNotifications = await Notification.find({ adminId: req.user._id })
+    // Fetch notifications from the last 15 days
+    const doctorNotifications = await Notification.find({
+      adminId: req.user._id,
+      type: 'doctor_registration',
+      createdAt: { $gte: fifteenDaysAgo }
+    })
       .populate('doctorId', 'name phone email licenseNo location practice certificate')
       .lean();
 
-    // Fetch flagged review notifications
-    const flaggedNotifications = await FlaggedReviewNotification.find({ adminId: req.user._id })
+    const patientNotifications = await Notification.find({
+      adminId: req.user._id,
+      type: 'patient_registration',
+      createdAt: { $gte: fifteenDaysAgo }
+    })
+      .populate('patientId', 'name email phone')
+      .lean();
+
+    const flaggedNotifications = await FlaggedReviewNotification.find({
+      adminId: req.user._id,
+      createdAt: { $gte: fifteenDaysAgo }
+    })
       .populate('doctorId', 'name email')
       .populate('patientId', 'name email')
       .populate('reviewId', 'rating reviewText')
@@ -123,8 +138,9 @@ exports.getAllNotifications = async (req, res) => {
         _id: notif._id,
         message: notif.message,
         read: notif.read,
+        status: notif.status,
         createdAt: notif.createdAt,
-        type: 'doctor_registration',
+        type: notif.type,
         doctor: notif.doctorId ? {
           name: notif.doctorId.name,
           phone: notif.doctorId.phone,
@@ -140,10 +156,23 @@ exports.getAllNotifications = async (req, res) => {
           } : null
         } : null
       })),
+      ...patientNotifications.map(notif => ({
+        _id: notif._id,
+        message: notif.message,
+        read: notif.read,
+        status: notif.status,
+        createdAt: notif.createdAt,
+        type: 'patient_registration',
+        patient: notif.patientId ? {
+          name: notif.patientId.name,
+          email: notif.patientId.email,
+        } : null
+      })),
       ...flaggedNotifications.map(notif => ({
         _id: notif._id,
         message: notif.message,
         read: notif.read,
+        status: notif.status,
         createdAt: notif.createdAt,
         type: 'flagged_review',
         doctor: notif.doctorId ? { name: notif.doctorId.name, email: notif.doctorId.email } : null,
@@ -162,7 +191,6 @@ exports.getAllNotifications = async (req, res) => {
 
     // Apply pagination
     const paginatedNotifications = combinedNotifications.slice(skip, skip + limit);
-    const total = combinedNotifications.length;
 
     res.status(200).json({
       success: true,
@@ -170,16 +198,15 @@ exports.getAllNotifications = async (req, res) => {
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: combinedNotifications.length,
+        pages: Math.ceil(combinedNotifications.length / limit)
       }
     });
   } catch (error) {
-    console.error("Error fetching all notifications:", error);
-    res.status(500).json({ success: false, message: "Server error while fetching notifications" });
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ message: "Server error while fetching notifications" });
   }
 };
-
 // Get notifications with certificate data
 exports.getNotifications = async (req, res) => {
   try {
@@ -210,6 +237,8 @@ exports.getNotifications = async (req, res) => {
         adminId: notification.adminId,
         doctorId: doctor?._id,
         read: notification.read,
+        status: notification.status, // Include status
+        type: notification.type,
         createdAt: notification.createdAt,
         doctor: doctor ? {
           name: doctor.name,
@@ -240,6 +269,7 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
+// Mark notification as read
 exports.markNotificationAsRead = async (req, res) => {
   try {
     const { id } = req.params;
@@ -266,7 +296,15 @@ exports.markNotificationAsRead = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Notification marked as read',
-      notification
+      notification: {
+        _id: notification._id,
+        message: notification.message,
+        read: notification.read,
+        status: notification.status, // Include status
+        createdAt: notification.createdAt,
+        doctorId: notification.doctorId?._id,
+        adminId: notification.adminId?._id
+      }
     });
   } catch (error) {
     console.error('Error marking notification as read:', error.stack);
@@ -453,6 +491,11 @@ exports.getAllUsers = async (req, res) => {
       .select('name email phone licenseNo location practice isApproved isActive createdAt photo')
       .sort({ createdAt: -1 });
 
+    const recentPatients = await userModel
+      .find({ role: 'patient' })
+      .select('name email phone location isActive createdAt photo') // Add isActive
+      .sort({ createdAt: -1 });
+
     const formattedDoctors = recentDoctors.map(doctor => {
       const photoData = doctor.photo && doctor.photo.data ? {
         contentType: doctor.photo.contentType || 'image/png',
@@ -474,15 +517,10 @@ exports.getAllUsers = async (req, res) => {
       };
     });
 
-    const recentPatients = await userModel
-      .find({ role: 'patient' })
-      .select('name email phone location createdAt photo')
-      .sort({ createdAt: -1 });
-
     const formattedPatients = recentPatients.map(patient => {
       const photoData = patient.photo && patient.photo.data ? {
         contentType: patient.photo.contentType || 'image/png',
-        data: Buffer.isBuffer(patient.photo.data) ? doctor.photo.data.toString('base64') : patient.photo.data
+        data: Buffer.isBuffer(patient.photo.data) ? patient.photo.data.toString('base64') : patient.photo.data
       } : null;
 
       return {
@@ -491,6 +529,7 @@ exports.getAllUsers = async (req, res) => {
         email: patient.email,
         phone: patient.phone,
         location: patient.location,
+        isActive: patient.isActive, // Add isActive
         createdAt: patient.createdAt,
         photo: photoData
       };
@@ -509,7 +548,6 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Error fetching data", error: error.message });
   }
 };
-
 exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;

@@ -69,7 +69,7 @@ const SidebarAdmin = () => {
             </NavLink>
 
             {/* Logout */}
-            <NavLink onClick={handleLogout} to="/login" activeClassName="bg-blue-800">
+            <NavLink onClick={handleLogout} to="/" activeClassName="bg-blue-800">
               <div className={`px-4 py-4 ${location.pathname === '/' ? 'bg-blue-800' : ''} hover:bg-blue-800 rounded-lg cursor-pointer flex items-center space-x-3`}>
                 <FaSignOutAlt className="w-5 h-5 text-white" aria-label="Logout" />
                 <span className="text-sm text-white">Logout</span>

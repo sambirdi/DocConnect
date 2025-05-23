@@ -3,6 +3,7 @@ import Header from '../components/header/header';
 import Footer from '../components/footer/footer';
 import { NavLink } from 'react-router-dom';
 import { FiCpu, FiShield, FiStar, FiMessageSquare } from "react-icons/fi";
+import Chatbot from '../components/chatbot/Chatbot'; 
 
 const teamImage = 'https://thumbs.dreamstime.com/b/doctor-stethoscope-hand-hospital-background-gown-94227568.jpg';
 
@@ -111,8 +112,8 @@ const AboutUs = () => {
                                 key={index}
                                 className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 group hover:-translate-y-1"
                             >
-                                <div className="w-16 h-16 bg-navy-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-teal-500 transition-colors duration-300">
-                                    <feature.icon className="w-8 h-8 text-teal-500 group-hover:text-white transition-colors duration-300" />
+                                <div className="w-16 h-16 bg-navy-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-navy/90 transition-colors duration-300">
+                                    <feature.icon className="w-8 h-8 text-navy group-hover:text-white transition-colors duration-300" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
                                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
@@ -137,11 +138,11 @@ const AboutUs = () => {
                             <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-purple-100 rounded-lg -z-10"></div>
                         </div>
                         <div className="space-y-6 order-1 md:order-2">
-                            <span className="inline-block px-4 py-1.5 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">
+                            <span className="inline-block px-4 py-1.5 bg-navy/30 text-navy rounded-full text-sm font-medium">
                                 About Us
                             </span>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Connecting You to Trusted Healthcare</h2>
-                            <div className="w-20 h-1.5 bg-teal-600 rounded-full"></div>
+                            <div className="w-20 h-1.5 bg-navy/60 rounded-full"></div>
                             <p className="text-gray-600 leading-relaxed text-lg">
                                 For over a decade, DocConnect has been bridging the gap between patients and trusted doctors worldwide. We
                                 simplify the process of finding the right healthcare provider by offering verified reviews, detailed
@@ -370,6 +371,7 @@ const AboutUs = () => {
             </main>
 
             <Footer />
+            <Chatbot /> 
         </div>
     );
 };

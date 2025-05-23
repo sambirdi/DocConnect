@@ -28,6 +28,15 @@ exports.flagReview = async (req, res) => {
             });
         }
 
+        // Fetch doctor details to get the name
+        const doctor = await User.findById(doctorId).select('name');
+        if (!doctor) {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor not found'
+            });
+        }
+
         // Create new flagged review
         const flaggedReview = new FlaggedReview({
             reviewId,
@@ -42,7 +51,7 @@ exports.flagReview = async (req, res) => {
         const admin = await User.findOne({ role: 'admin' });
         if (admin) {
             const notification = new FlaggedReviewNotification({
-                message: `A review for Dr. ${doctorId} has been flagged for review.`,
+                message: `A review for ${doctor.name} has been flagged for review.`,
                 adminId: admin._id,
                 doctorId,
                 patientId: review.patientId,

@@ -5,16 +5,23 @@ import { FiStar } from "react-icons/fi";
 import Header from "../components/header/header";
 import Footer from "../components/footer/footer";
 import axios from "axios";
+import Chatbot from '../components/chatbot/Chatbot';
 
 const SearchResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
+  const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchParams, setSearchParams] = useState({
     symptoms: "",
     location: "",
+  });
+  const [filters, setFilters] = useState({
+    gender: "",
+    experience: "",
+    rating: "",
   });
 
   useEffect(() => {
@@ -34,6 +41,7 @@ const SearchResults = () => {
 
         if (!symptoms && !locationParam) {
           setDoctors([]);
+          setFilteredDoctors([]);
           return;
         }
 
@@ -43,12 +51,17 @@ const SearchResults = () => {
             params: {
               symptoms,
               location: locationParam,
+              gender: filters.gender,
+              experience: filters.experience,
+              rating: filters.rating,
             },
           }
         );
 
         if (response.data.success) {
-          setDoctors(response.data.data || []);
+          const fetchedDoctors = response.data.data || [];
+          setDoctors(fetchedDoctors);
+          setFilteredDoctors(fetchedDoctors);
         } else {
           setError(response.data.message || "Failed to fetch doctors");
         }
@@ -60,9 +73,17 @@ const SearchResults = () => {
       }
     };
 
-    const timer = setTimeout(fetchDoctors, 500); // Small delay for better UX
+    const timer = setTimeout(fetchDoctors, 500);
     return () => clearTimeout(timer);
-  }, [location.search]);
+  }, [location.search, filters]);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const getDoctorImage = (doctor) => {
     if (doctor.photo?.data) {
@@ -75,7 +96,6 @@ const SearchResults = () => {
     navigate(`/doctor/${doctor._id || doctor.id}`);
   };
 
-  // Function to truncate the about text
   const truncateText = (text, maxLength = 100) => {
     if (!text || text.length <= maxLength) return text;
     return text.substring(0, maxLength).trim() + "....";
@@ -112,12 +132,68 @@ const SearchResults = () => {
             Search Results
           </h1>
           <p className="mt-2 text-gray-600 px-6">
-            {doctors.length} doctors found
+            {filteredDoctors.length} doctors found
             {searchParams.symptoms && (
               <span> for "{searchParams.symptoms}"</span>
             )}
             {searchParams.location && <span> in {searchParams.location}</span>}
           </p>
+        </div>
+
+        <div className="mb-8 px-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gender
+              </label>
+              <select
+                name="gender"
+                value={filters.gender}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-navy"
+              >
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Experience
+              </label>
+              <select
+                name="experience"
+                value={filters.experience}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-navy"
+              >
+                <option value="">All Experience Levels</option>
+                <option value="0-5">0-5 years</option>
+                <option value="5-10">5-10 years</option>
+                <option value="10-20">10-20 years</option>
+                <option value="20-999">20+ years</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Minimum Rating
+              </label>
+              <select
+                name="rating"
+                value={filters.rating}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-navy"
+              >
+                <option value="">All Ratings</option>
+                <option value="1">1+ Stars</option>
+                <option value="2">2+ Stars</option>
+                <option value="3">3+ Stars</option>
+                <option value="4">4+ Stars</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -134,13 +210,13 @@ const SearchResults = () => {
               Try Again
             </button>
           </div>
-        ) : doctors.length === 0 ? (
+        ) : filteredDoctors.length === 0 ? (
           <div className="text-center py-16">
             <h3 className="text-xl font-medium text-gray-700 mb-2">
               No doctors found
             </h3>
             <p className="text-gray-600 mb-4">
-              Try adjusting your search criteria
+              Try adjusting your search criteria or filters
             </p>
             <button
               onClick={() => navigate(-1)}
@@ -151,7 +227,7 @@ const SearchResults = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {doctors.map((doctor) => (
+            {filteredDoctors.map((doctor) => (
               <div
                 key={doctor._id || doctor.id}
                 onClick={() => handleDoctorClick(doctor)}
@@ -210,6 +286,7 @@ const SearchResults = () => {
         )}
       </div>
       <Footer />
+      <Chatbot />
     </div>
   );
 };

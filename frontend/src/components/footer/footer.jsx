@@ -110,7 +110,7 @@ export default function Footer() {
                     <div className="mt-12 pt-8 border-t border-white/10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                             <div className="text-gray-400 text-sm">
-                                © 2024 DocConnect. All rights reserved.
+                                © 2025 DocConnect. All rights reserved.
                             </div>
                             <div className="flex flex-wrap gap-6 md:justify-end">
                                 {footerLinks.legal.map((link) => (

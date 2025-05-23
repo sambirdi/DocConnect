@@ -6,16 +6,30 @@ const notificationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Admin who will see this notification
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Doctor being approved/rejected
-  // type: { type: String, enum: ['general', 'verification'], default: 'general'}
+  patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Patient who registered
+  type: { 
+    type: String, 
+    enum: ['doctor_registration', 'patient_registration', 'flagged_review', 'account_approval'], // Added account_approval
+    required: true 
+  },
+  status: { 
+    type: String, 
+    enum: ['pending', 'approved', 'rejected'], 
+    default: 'pending' // Default for doctor_registration notifications
+  }
 });
 
 // Create a method to populate the notification with necessary user info
 notificationSchema.methods.populateUserInfo = function() {
   return this.populate([
     { path: 'adminId', select: 'name email phone' },
-    { path: 'doctorId', select: 'name email phone licenseNo' }
+    { path: 'doctorId', select: 'name email phone licenseNo' },
+    { path: 'patientId', select: 'name email phone' }
   ]);
 };
+
+// Index for efficient querying by type, status, and creation time
+notificationSchema.index({ type: 1, status: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 

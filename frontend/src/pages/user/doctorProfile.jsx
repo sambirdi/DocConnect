@@ -7,7 +7,8 @@ import ReviewModal from '../../components/review/review';
 import axios from 'axios';
 import { useAuth } from '../../context/auth';
 import { toast } from 'react-hot-toast';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import Chatbot from '../../components/chatbot/Chatbot';
+
 
 const Profile = () => {
     const { id } = useParams();
@@ -30,6 +31,7 @@ const Profile = () => {
         isOpen: false,
         reviewId: null
     });
+    const [flaggedReviews, setFlaggedReviews] = useState([]);
 
     const calculateAverageRating = (reviews) => {
         if (!reviews || reviews.length === 0) return 0;
@@ -68,7 +70,7 @@ const Profile = () => {
     ]);
 
     // Update the Location Section with proper API key handling
-    // const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
     // Fetch doctor data and reviews
     useEffect(() => {
@@ -134,7 +136,7 @@ const Profile = () => {
                 targetRef = faqsRef;
                 break;
             case "PROFESSIONAL INFO":
-                targetRef = locationRef;
+                targetRef = navRef;
                 break;
             default:
                 return;
@@ -201,7 +203,7 @@ const Profile = () => {
             toast.error('Please log in to report a review');
             return;
         }
-
+        
         if (auth?.user?.name === review.patientName) {
             toast.error('You cannot report your own review');
             return;
@@ -237,6 +239,11 @@ const Profile = () => {
 
             if (response.data.success) {
                 toast.success('Review has been reported for admin review');
+                // Update flaggedReviews state immediately
+                setFlaggedReviews(prev => [...prev, {
+                    reviewId: { _id: flagDialog.review._id },
+                    status: 'pending'
+                }]);
                 setFlagDialog({ isOpen: false, review: null, reason: '', otherReason: '' });
             }
         } catch (err) {
@@ -245,9 +252,45 @@ const Profile = () => {
         }
     };
 
+    // Add polling for flagged reviews status
+    useEffect(() => {
+        let interval;
+        const pollFlaggedReviews = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/api/reviews/flagged', {
+                    headers: { Authorization: `Bearer ${auth.token}` }
+                });
+                setFlaggedReviews(response.data.flaggedReviews);
+            } catch (err) {
+                console.error('Error polling flagged reviews:', err);
+            }
+        };
+
+        if (auth.token) {
+            // Initial fetch
+            pollFlaggedReviews();
+            // Set up polling every 10 seconds
+            interval = setInterval(pollFlaggedReviews, 10000);
+        }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [auth.token]);
+
+    const isReviewFlagged = (reviewId) => {
+        const flaggedReview = flaggedReviews.find(fr => fr.reviewId?._id === reviewId);
+        return flaggedReview && flaggedReview.status === 'pending';
+    };
+
     const renderReviewActions = (review) => {
         const isOwnReview = auth?.user?.name === review.patientName;
-
+        const isFlagged = isReviewFlagged(review._id);
+        const flaggedReview = flaggedReviews.find(fr => fr.reviewId?._id === review._id);
+        const isSafe = flaggedReview?.status === 'safe';
+        
         return (
             <div className="flex items-center gap-2">
                 {isOwnReview ? (
@@ -271,8 +314,11 @@ const Profile = () => {
                     auth?.user && (
                         <button
                             onClick={() => handleFlagClick(review)}
-                            className="text-gray-600 hover:text-red-600"
-                            title="Report Review"
+                            className={`transition-colors duration-200 ${
+                                isFlagged && !isSafe ? 'text-red-600' : 'text-gray-600 hover:text-red-600'
+                            }`}
+                            title={isFlagged ? (isSafe ? "Review Marked Safe" : "Review Reported") : "Report Review"}
+                            disabled={isFlagged && !isSafe}
                         >
                             <FaFlag />
                         </button>
@@ -293,27 +339,6 @@ const Profile = () => {
             </div>
         );
     }
-
-    // Map configuration
-    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-    const mapContainerStyle = {
-        width: '100%',
-        height: '400px',
-    };
-    const defaultCenter = {
-        lat: 27.7172, // Default to Kathmandu if no coordinates
-        lng: 85.3240,
-    };
-
-    // Determine map center based on latitude and longitude
-    // const mapCenter = doctor.latitude && doctor.longitude
-    //     ? { lat: doctor.latitude, lng: doctor.longitude }
-    //     : defaultCenter;
-
-    const isValidCoordinates = doctor.latitude && doctor.longitude && !isNaN(doctor.latitude) && !isNaN(doctor.longitude);
-    const mapCenter = isValidCoordinates
-        ? { lat: doctor.latitude, lng: doctor.longitude }
-        : null;    
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -398,10 +423,11 @@ const Profile = () => {
                                         <button
                                             key={tab}
                                             onClick={() => handleTabClick(tab)}
-                                            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap ${activeTab === tab
-                                                ? "border-blue-500 text-blue-500"
-                                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                                }`}
+                                            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap ${
+                                                activeTab === tab
+                                                    ? "border-blue-500 text-blue-500"
+                                                    : "border-transparent text-gray-500 hover:text-gray-700"
+                                            }`}
                                         >
                                             {tab}
                                         </button>
@@ -478,37 +504,17 @@ const Profile = () => {
                                             <FaMapMarkerAlt className="text-navy/80" />
                                             <span className="font-medium">{doctor.workplace}</span>
                                         </div>
-                                        <div className="h-96 w-full rounded-lg overflow-hidden" aria-label={`Map showing location of ${doctor.workplace}`}>
-                                            {loadMap && GOOGLE_MAPS_API_KEY && isValidCoordinates ? (
-                                                <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-                                                    <GoogleMap
-                                                        mapContainerStyle={mapContainerStyle}
-                                                        center={mapCenter}
-                                                        zoom={15}
-                                                        aria-label={`Map centered at ${doctor.workplace}`}
-                                                    >
-                                                        <Marker
-                                                            position={mapCenter}
-                                                            onClick={() => window.open(`https://www.google.com/maps?q=${doctor.latitude},${doctor.longitude}`, '_blank')}
-                                                        />
-                                                    </GoogleMap>
-                                                </LoadScript>
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500" role="alert">
-                                                    <p>{isValidCoordinates ? "Map is loading..." : "Doctor’s location is not available."}</p>
-                                                </div>
-                                            )}
+                                        <div className="h-96 w-full rounded-lg overflow-hidden">
+                                            <iframe
+                                                src={`https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=${encodeURIComponent(doctor.workplace || '')}`}
+                                                width="100%"
+                                                height="100%"
+                                                style={{ border: 0 }}
+                                                allowFullScreen=""
+                                                loading="lazy"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                            ></iframe>
                                         </div>
-                                        {isValidCoordinates && (
-                                            <a
-                                                href={`https://www.google.com/maps?q=${doctor.latitude},${doctor.longitude}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-navy hover:underline mt-2 inline-block"
-                                            >
-                                                Get Directions
-                                            </a>
-                                        )}
                                     </div>
                                 </div>
                             )}
@@ -626,7 +632,10 @@ const Profile = () => {
                                     <div className="space-y-4">
                                         {reviews.length ? (
                                             reviews.map((review) => (
-                                                <div key={review._id} className="mb-6 rounded-lg border bg-white p-4 shadow-sm">
+                                                <div 
+                                                    key={review._id} 
+                                                    className="bg-white rounded-lg shadow-md p-6"
+                                                >
                                                     <div className="flex items-start justify-between">
                                                         <div>
                                                             <h4 className="font-semibold">{review.patientName}</h4>
@@ -635,8 +644,9 @@ const Profile = () => {
                                                                     {[...Array(5)].map((_, index) => (
                                                                         <span
                                                                             key={index}
-                                                                            className={`text-lg ${index < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                                                                                }`}
+                                                                            className={`text-lg ${
+                                                                                index < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                                                            }`}
                                                                         >
                                                                             ★
                                                                         </span>
@@ -826,6 +836,7 @@ const Profile = () => {
                 </div>
             )}
             <Footer />
+           <Chatbot />
         </div>
     );
 };

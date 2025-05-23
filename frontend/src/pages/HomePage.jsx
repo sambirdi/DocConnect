@@ -71,6 +71,13 @@ const HomePage = () => {
     navigate(`/search-results?symptoms=${encodeURIComponent(searchInput.symptoms)}&location=${encodeURIComponent(searchInput.location)}`);
   };
 
+  // Handle Enter key press for search
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Enhanced Hero Section */}
@@ -89,7 +96,7 @@ const HomePage = () => {
             Find Your Perfect Doctor
           </h1>
           <p className="text-xl text-white/90 mb-8 max-w-2xl">
-            Connect with trusted healthcare professionals and book appointments with ease
+            Connect with trusted healthcare professionals with simple click.
           </p>
           
           {/* Enhanced Search Section */}
@@ -110,6 +117,7 @@ const HomePage = () => {
                   placeholder="Location"
                   value={searchInput.location}
                   onChange={(e) => setSearchInput({ ...searchInput, location: e.target.value })}
+                  onKeyDown={handleKeyDown}
                   className="w-full px-4 py-3 rounded-xl bg-white/90 border-2 border-transparent focus:border-navy focus:ring-2 focus:ring-navy transition-all duration-300"
                 />
               </div>

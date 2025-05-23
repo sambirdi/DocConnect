@@ -37,7 +37,7 @@ const authenticateAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find user by decoded ID
-    const user = await userModel.findById(decoded.id);  // Ensure you're matching `decoded.id` with the `_id` field
+    const user = await userModel.findById(decoded.id);  // Ensure you're matching decoded.id with the _id field
 
     // If user doesn't exist
     if (!user) {

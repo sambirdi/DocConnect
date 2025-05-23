@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SidebarAdmin from '../../components/Sidebar/SidebarAdmin';
 import AdminHeader from '../../components/header/adminHeader';
 import { useAuth } from '../../context/auth';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaUserMd } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 const Doctors = () => {
@@ -23,42 +23,39 @@ const Doctors = () => {
         isActive: true
     });
 
+    const fetchDoctors = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/all-users', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${auth.token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch doctors');
+
+            const data = await response.json();
+            const processedDoctors = data.recentDoctors.map(doctor => ({
+                ...doctor,
+                isActive: doctor.isActive
+            }));
+            
+            setDoctors(processedDoctors || []);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchDoctors = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch('http://localhost:5000/api/admin/all-users', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${auth.token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch doctors');
-
-                const data = await response.json();
-                // console.log('Raw doctors data:', data.recentDoctors);
-                
-                const processedDoctors = data.recentDoctors.map(doctor => {
-                    // console.log(`Doctor ${doctor.name} isActive status:`, doctor.isActive);
-                    return {
-                        ...doctor,
-                        isActive: doctor.isActive
-                    };
-                });
-                
-                // console.log('Processed doctors:', processedDoctors);
-                setDoctors(processedDoctors || []);
-            } catch (err) {
-                // console.error('Error fetching doctors:', err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (auth.token) fetchDoctors();
+        if (auth.token) {
+            fetchDoctors();
+            // Set up polling every 30 seconds
+            const interval = setInterval(fetchDoctors, 30000);
+            return () => clearInterval(interval);
+        }
     }, [auth.token]);
 
     const handleDelete = async (doctorId) => {
@@ -151,13 +148,43 @@ const Doctors = () => {
             <SidebarAdmin />
             <main className="flex-1 ml-64">
                 <AdminHeader />
-                <div className="p-4">
-                    <h1 className="text-2xl font-bold mb-4">Doctors</h1>
-                    <div className="bg-white rounded-lg shadow-sm">
+                <div className="p-6 max-w-7xl mx-auto">
+                    {/* Header Section */}
+                    <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border-l-4 border-blue-500">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-blue-100 p-2 rounded-full">
+                                    <FaUserMd className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-semibold text-gray-800">Doctors</h1>
+                                    <p className="text-sm text-gray-500 mt-1">Manage and review all registered doctors</p>
+                                </div>
+                            </div>
+                            <div className="bg-blue-50 px-4 py-2 rounded-full">
+                                <span className="text-sm font-medium text-blue-600">
+                                    {doctors.length} {doctors.length === 1 ? 'Doctor' : 'Doctors'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Table Section */}
+                    <div className="bg-white rounded-lg shadow-sm p-6">
                         {loading ? (
-                            <div className="text-center text-gray-500 p-4">Loading doctors...</div>
+                            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                                <FaUserMd className="mb-4 h-10 w-10 text-blue-300" />
+                                Loading doctors...
+                            </div>
                         ) : error ? (
-                            <div className="text-center text-red-500 p-4">{error}</div>
+                            <div className="flex flex-col items-center justify-center py-16 text-red-500">
+                                <FaUserMd className="mb-4 h-10 w-10 text-red-300" />
+                                {error}
+                            </div>
+                        ) : doctors.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                                <FaUserMd className="mb-4 h-10 w-10 text-blue-300" />
+                                No doctors found.
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -175,7 +202,7 @@ const Doctors = () => {
                                     </thead>
                                     <tbody>
                                         {doctors.map((doctor) => (
-                                            <tr key={doctor._id} className="border-b hover:bg-gray-50">
+                                            <tr key={doctor._id} className="border-b hover:bg-blue-50/40 transition-colors">
                                                 <td className="px-4 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 overflow-hidden">

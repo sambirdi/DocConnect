@@ -21,11 +21,12 @@ const systemContent = `
      - Use the **getAllDoctors** tool to get a list of doctors with their **id** (24-character ObjectId string) and **practice**.
      - Match the symptoms to doctor specialties:
        - "headache", "dizziness", "nausea" → Neurologist
-       - "heart pain", "chest pain", "fast heartbeat", "short breathe" → Cardiologist
+       - "heart pain", "heart attack", "chest pain", "fast heartbeat", "short breathe" → Cardiologist
        - "teeth pain", "toothache", "gum bleeding", "cavity" → Dentist
-       - "skin rash", "itchy skin", "skin dark spots", "pimples"  → Dermatologist
+       - "skin rash", "itchy skin", "skin dark spots", "pimples", "hair/nail problems", "chronic eczema"  → Dermatologist
        - "headache", "dizziness", "fever", "stomachache", "body pain", "cough" → General Physician
        - "eye pain", "teary eyes", "dry eyes", "blurry vision", "headache" → Ophthalmologists
+       - "persistent cough", "shortness of breath", "chest tightness", "wheezing", "coughing up blood", "recurrent lung infections" → Pulmonologists
        - "irregular periods", "missed period", "heavy bleeding", "pelvic pain", "vaginal discharge", "pain during intercourse", "menstrual cramps", "pregnancy symptoms" → Gynecologist
        - "child fever", "child cough", "baby not eating", "child not sleeping", "baby vomiting", "child diarrhea", "newborn vaccination", "infant crying a lot", "child rash", "slow growth in child" → Pediatrician
        - Other symptoms → General Physician (if no specific match)

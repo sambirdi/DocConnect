@@ -10,7 +10,7 @@ const patientRoutes = require('./routes/patientRoutes')
 const docNotiRoute = require('./routes/docNotiRoutes');
 const chatbotRoute = require('./routes/chatbotRoute');
 const flaggedReviewRoutes = require('./routes/flaggedReviewRoutes');
-
+require('./cron/cleanupNotifications');
 const app = express();
 
 // Connect to MongoDB

@@ -22,6 +22,7 @@ exports.updateDocProfileController = async (req, res) => {
       qualification,
       about,
       workplace,
+      gender,
     } = req.fields;
     const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -45,6 +46,7 @@ exports.updateDocProfileController = async (req, res) => {
       qualification: qualification || user.qualification,
       about: about || user.about,
       workplace: workplace || user.workplace,
+      gender: gender || user.gender,
     };
 
     if (photo) {
@@ -197,6 +199,7 @@ exports.getDoctorById = async (req, res) => {
       latitude: doctor.latitude,
       longitude: doctor.longitude,
       isApproved: doctor.isApproved,
+      gender: doctor.gender,
       photo: photoData,
     };
 
@@ -217,7 +220,7 @@ exports.getDoctorsBySpecialty = async (req, res) => {
     const doctors = await userModel
       .find({
         role: "doctor",
-        practice: { $regex: new RegExp(`^${specialty}$`, "i") }, // Case-insensitive match
+        practice: { $regex: new RegExp(`^${specialty}$`, "i") },
         isApproved: true,
         isActive: true
       })
@@ -229,7 +232,6 @@ exports.getDoctorsBySpecialty = async (req, res) => {
       .find({ doctorId: { $in: doctorIds } })
       .populate("patientId", "name")
       .select("doctorId rating reviewText createdAt");
-
 
     const formattedDoctors = doctors.map((doctor) => {
       // Filter reviews for this doctor
@@ -249,11 +251,12 @@ exports.getDoctorsBySpecialty = async (req, res) => {
 
       // Format reviews
       const formattedReviews = doctorReviews.map((review) => ({
-        patientName: review.patientId.name,
+        patientName: review.patientId?.name || "Unknown Patient", // Handle null patientId
         rating: review.rating,
         reviewText: review.reviewText,
         createdAt: review.createdAt,
       }));
+
       return {
         id: doctor._id,
         name: doctor.name,
@@ -281,7 +284,6 @@ exports.getDoctorsBySpecialty = async (req, res) => {
     res.status(500).json({ success: false, message: "Error fetching doctors" });
   }
 };
-
 exports.changePassword = async (req, res) => {
   try {
     const { newPassword } = req.body;
@@ -365,9 +367,8 @@ exports.getAllDoctors = async (req, res) => {
 };
 
 exports.searchDoctor = async (req, res) => {
-  const { symptoms, location } = req.query;
+  const { symptoms, location, gender, experience, rating } = req.query;
   try {
-    // Validate input
     if (!symptoms) {
       return res.status(400).json({
         success: false,
@@ -375,7 +376,6 @@ exports.searchDoctor = async (req, res) => {
       });
     }
 
-    // Invoke agentBuilder
     const messages = [
       {
         role: "user",
@@ -394,18 +394,13 @@ exports.searchDoctor = async (req, res) => {
 
     const response = result.messages[result.messages.length - 1].content;
 
-    // Log for debugging
-    // console.log("Raw agentBuilder response:", response);
-
-    // Enhanced response cleaning
     let cleanedResponse = response
-      .replace(/```json\n?/, "") // Remove ```json
-      .replace(/\n?```/, "") // Remove closing ```
-      .replace(/^\s*[\{\[]\s*/, "") // Remove leading { or [
-      .replace(/\s*[\]\}]\s*$/, "") // Remove trailing ] or }
+      .replace(/```json\n?/, "")
+      .replace(/\n?```/, "")
+      .replace(/^\s*[\{\[]\s*/, "")
+      .replace(/\s*[\]\}]\s*$/, "")
       .trim();
 
-    // If response is empty or not an array, return empty array
     if (!cleanedResponse || cleanedResponse === "[]") {
       return res.status(200).json({
         success: true,
@@ -414,13 +409,9 @@ exports.searchDoctor = async (req, res) => {
       });
     }
 
-    // console.log("Cleaned response:", cleanedResponse);
-
     let stringArray = [];
     try {
-      // Try parsing as JSON array
       stringArray = JSON.parse(`[${cleanedResponse}]`);
-      // Ensure it's an array and contains valid ObjectIds
       if (!Array.isArray(stringArray)) {
         throw new Error("Response is not an array");
       }
@@ -428,8 +419,6 @@ exports.searchDoctor = async (req, res) => {
         mongoose.Types.ObjectId.isValid(id)
       );
     } catch (error) {
-      console.error("Error parsing string array:", error);
-      // Fallback: try parsing raw response or extract IDs manually
       try {
         stringArray = JSON.parse(response);
         if (!Array.isArray(stringArray)) {
@@ -439,14 +428,12 @@ exports.searchDoctor = async (req, res) => {
           mongoose.Types.ObjectId.isValid(id)
         );
       } catch (fallbackError) {
-        // Manual extraction of ObjectIds using regex
         const idRegex = /[0-9a-fA-F]{24}/g;
         stringArray = response.match(idRegex) || [];
         stringArray = stringArray.filter((id) =>
           mongoose.Types.ObjectId.isValid(id)
         );
         if (stringArray.length === 0) {
-          console.error("Fallback parsing failed:", fallbackError);
           return res.status(200).json({
             success: true,
             message: "No doctors found due to invalid response format",
@@ -464,47 +451,138 @@ exports.searchDoctor = async (req, res) => {
       });
     }
 
-    // console.log("Parsed stringArray:", stringArray);
-
-    // Query doctors
     const query = {
       _id: { $in: stringArray.map((id) => new mongoose.Types.ObjectId(id)) },
       role: "doctor",
       isApproved: true,
       isActive: true
     };
+
     if (location) {
       query.location = { $regex: location, $options: "i" };
     }
 
-    const doctors = await userModel.find(query).select(
-      "name phone practice location about workplace institution experience qualification photo"
-    );
+    if (gender) {
+      query.gender = { $regex: `^${gender}$`, $options: "i" };
+    }
 
-    // Fetch reviews for all doctors in one query
-    const doctorIds = doctors.map((doc) => doc._id);
-    const reviews = await reviewModel
-      .find({ doctorId: { $in: doctorIds } })
-      .populate("patientId", "name")
-      .select("doctorId rating reviewText createdAt");
+    // Parse experience range
+    let experienceFilter = null;
+    if (experience) {
+      const [minExp, maxExp] = experience.split("-").map(Number);
+      experienceFilter = { minExp, maxExp: maxExp === 999 ? Number.MAX_SAFE_INTEGER : maxExp };
+    }
 
-    // Format response
+    // Fetch doctors and their reviews in an aggregation pipeline
+    const doctorsAggregation = await userModel.aggregate([
+      { $match: query },
+      {
+        $addFields: {
+          parsedExperience: {
+            $cond: {
+              if: { $eq: ["$experience", null] },
+              then: 0,
+              else: {
+                $toInt: {
+                  $arrayElemAt: [
+                    { $split: ["$experience", " "] },
+                    0
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      ...(experienceFilter
+        ? [{
+            $match: {
+              parsedExperience: {
+                $gte: experienceFilter.minExp,
+                $lte: experienceFilter.maxExp
+              }
+            }
+          }]
+        : []),
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "_id",
+          foreignField: "doctorId",
+          as: "reviewsData"
+        }
+      },
+      {
+        $addFields: {
+          averageRating: {
+            $cond: {
+              if: { $gt: [{ $size: "$reviewsData" }, 0] },
+              then: {
+                $divide: [
+                  { $sum: "$reviewsData.rating" },
+                  { $size: "$reviewsData" }
+                ]
+              },
+              else: 0
+            }
+          },
+          totalReviews: { $size: "$reviewsData" }
+        }
+      },
+      ...(rating
+        ? [{
+            $match: {
+              averageRating: { $gte: Number(rating) }
+            }
+          }]
+        : []),
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          practice: 1,
+          location: 1,
+          about: 1,
+          workplace: 1,
+          institution: 1,
+          experience: 1,
+          parsedExperience: 1,
+          qualification: 1,
+          gender: 1,
+          photo: 1,
+          averageRating: 1,
+          totalReviews: 1,
+          reviewsData: {
+            $map: {
+              input: "$reviewsData",
+              as: "review",
+              in: {
+                patientName: {
+                  $cond: [
+                    { $eq: ["$$review.patientId", null] },
+                    "Anonymous",
+                    "$$review.patientId.name"
+                  ]
+                },
+                rating: "$$review.rating",
+                reviewText: "$$review.reviewText",
+                createdAt: "$$review.createdAt"
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    // Populate patient names for reviews
+    const doctors = await userModel.populate(doctorsAggregation, {
+      path: "reviewsData.patientId",
+      select: "name"
+    });
+
     const formattedDoctors = doctors.map((doc) => {
-      const doctorReviews = reviews.filter((review) =>
-        review.doctorId.equals(doc._id)
-      );
-
-      const totalReviews = doctorReviews.length;
-      const averageRating =
-        totalReviews > 0
-          ? (
-            doctorReviews.reduce((sum, review) => sum + review.rating, 0) /
-            totalReviews
-          ).toFixed(1)
-          : 0;
-
-      const formattedReviews = doctorReviews.map((review) => ({
-        patientName: review.patientId.name,
+      const formattedReviews = doc.reviewsData.map((review) => ({
+        patientName: review.patientName || "Anonymous", // Use patientName from aggregation
         rating: review.rating,
         reviewText: review.reviewText,
         createdAt: review.createdAt,
@@ -520,6 +598,7 @@ exports.searchDoctor = async (req, res) => {
         workplace: doc.workplace,
         institution: doc.institution,
         experience: doc.experience,
+        gender: doc.gender,
         qualification: doc.qualification,
         photo: doc.photo?.data
           ? {
@@ -528,8 +607,8 @@ exports.searchDoctor = async (req, res) => {
           }
           : null,
         reviews: {
-          averageRating,
-          totalReviews,
+          averageRating: doc.averageRating.toFixed(1),
+          totalReviews: doc.totalReviews,
           reviews: formattedReviews,
         },
       };

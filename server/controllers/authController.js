@@ -51,17 +51,14 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if password and confirmPassword are the same
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    // Check if password is at least 6 characters long
     if (password.length < 6) {
       return res.status(400).json({ message: "Password should be at least 6 characters long" });
     }
 
-    // Check if the user already exists
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists, please login instead" });
@@ -87,6 +84,22 @@ exports.register = async (req, res) => {
     });
     await user.save();
 
+    // Fetch the admin user
+    const admin = await userModel.findOne({ role: 'admin' });
+    if (!admin) {
+      console.warn("Admin not found. Notification for patient registration not sent.");
+    } else {
+      // Create and save a notification for the admin about the new patient registration
+      const notification = new Notification({
+        message: `A new patient ${name} has registered.`,
+        adminId: admin._id,
+        patientId: user._id,
+        type: "patient_registration",
+        status: "approved", // Patients don't require approval
+      });
+      await notification.save();
+    }
+
     // Send OTP to user's email
     await sendVerificationOTP(email, otp);
 
@@ -100,58 +113,6 @@ exports.register = async (req, res) => {
     res.status(500).json({ success: false, message: "Error in registration", error });
   }
 };
-
-// exports.register = async (req, res) => {
-//   try {
-//     const { name, email, password, confirmPassword } = req.body;
-
-//     // Set default role for patient
-//     const role = "patient"; // Default role for patients
-
-//     // Validations
-//     if (!name || !email || !password || !confirmPassword ) {
-//       return res.status(400).json({ message: "All fields are required" });
-//     }
-
-//     // Check if password and confirmPass are the same
-//     if (password !== confirmPassword) {
-//       return res.status(400).json({ message: "Passwords do not match" });
-//     }
-
-//     // Check if password is at least 6 characters long
-//     if (password.length < 6) {
-//       return res.status(400).json({ message: "Password should be at least 6 characters long" });
-//     }
-
-//     // Check if the user already exists
-//     const existingUser = await userModel.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: "User already exists, please login instead" });
-//     }
-
-//     // Hash the password using bcrypt
-//     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
-
-//     // Register the user
-//     const user = new userModel({
-//       name,
-//       email,
-//       password: hashedPassword,
-//       confirmPassword: hashedPassword,
-//       role, // Role is automatically set as "patient"
-//     });
-//     await user.save();
-
-//     res.status(201).json({
-//       success: true,
-//       message: "User registered successfully",
-//       user,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ success: false, message: "Error in registration", error });
-//   }
-// };
 
 // Doctor Registration
 exports.docRegister = async (req, res) => {
@@ -191,6 +152,11 @@ exports.docRegister = async (req, res) => {
     const existingLicense = await userModel.findOne({ licenseNo });
     if (existingLicense) {
       return res.status(400).json({ message: "Doctor's license no already exists." });
+    }
+    // Check if the phone number already exists
+    const existingPhone = await userModel.findOne({ phone });
+    if (existingPhone) {
+       return res.status(400).json({ message: "Phone number already in use." });
     }
 
     // Read certificate file
@@ -236,6 +202,8 @@ exports.docRegister = async (req, res) => {
       message: `A new doctor ${name} has registered and is awaiting approval.`,
       adminId: admin._id,
       doctorId: user._id,
+      type: "doctor_registration",
+      status: "pending"
     });
     await notification.save();
 
@@ -340,7 +308,6 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Check if user is verified
     // Check if user is verified (only for non-doctors)
     if (user.role !== 'doctor' && !user.isVerified) {
       return res.status(403).json({ message: 'Please verify your email before logging in.' });
@@ -356,10 +323,21 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // If doctor and inactive, reactivate the account
-    if (user.role === 'doctor' && !user.isActive && user.isApproved) {
-      user.isActive = true;
-      await user.save();
+    // Reactivate account if inactive
+    if (!user.isActive) {
+      if (user.role === 'doctor') {
+        // Doctor reactivation (existing logic)
+        if (!user.isApproved) {
+          return res.status(403).json({ message: 'Cannot reactivate an unapproved doctor account.' });
+        }
+        user.isActive = true;
+        await user.save();
+      } else if (user.role === 'patient') {
+        // Patient reactivation
+        user.isActive = true;
+        await user.save();
+      }
+      // Note: Admin accounts are not reactivated automatically
     }
 
     const token = JWT.sign(
@@ -400,7 +378,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendPasswordResetEmail = async (email, accessToken) => {
-  const resetLink = `http://localhost:3000/forgot-password?token=${accessToken}&email=${email}`;
+  const resetLink = `http://localhost:3000/reset-password?token=${accessToken}&email=${email}`;
 
   const mailOptions = {
     from: 'np03cs4a220023@heraldcollege.edu.np', // sender address
@@ -509,4 +487,3 @@ exports.userInfo = async (req, res) => {
     });
   }
 };
-

@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
   confirmPassword : {type: String},
   phone: {
     type: String,
+    unique: true,
+    sparse: true,
     validate: {
       validator: function (v) {
         return /^\d{10}$/.test(v); // Must be exactly 10 digits
@@ -30,6 +32,11 @@ const userSchema = new mongoose.Schema({
   experience: {type: String},
   qualification: {type: String},
   workplace: {type: String},
+  gender: {
+    type: String,
+    enum: ['Male', 'Female'],
+    default: null
+  },
   latitude: { type: Number, default: null },
   longitude: { type: Number, default: null },
   role: {

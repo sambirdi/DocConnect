@@ -30,7 +30,7 @@ const Header = () => {
       token: "",
     });
     localStorage.removeItem("auth");
-    navigate("/login");
+    navigate("/");
   };
 
   // Initialize auth state from localStorage on component mount

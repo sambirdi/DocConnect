@@ -98,7 +98,7 @@ const AddSeniorDoc = () => {
 
       try {
         const response = await axios.post(
-          "http://localhost:5000/api/admin/add-senior-doctor",
+          "http://localhost:5000/api/admin/senior-doctor",
           data,
           {
             headers: {

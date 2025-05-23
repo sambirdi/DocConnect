@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const specialties = [
   { name: "Primary Care Physicians", altName: "General Physician" },
-  { name: "Psychiatrists" },
+  { name: "Pulmonologist" },
   { name: "Optometrists" },
   { name: "Dermatologist" },
   { name: "Dentists" },

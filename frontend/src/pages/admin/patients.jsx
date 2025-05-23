@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SidebarAdmin from '../../components/Sidebar/SidebarAdmin';
 import AdminHeader from '../../components/header/adminHeader';
 import { useAuth } from '../../context/auth';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaUser } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 const Patients = () => {
@@ -19,30 +19,34 @@ const Patients = () => {
         location: ''
     });
 
+    const fetchPatients = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/all-users', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${auth.token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch patients');
+
+            const data = await response.json();
+            setPatients(data.recentPatients || []);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchPatients = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch('http://localhost:5000/api/admin/all-users', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${auth.token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch patients');
-
-                const data = await response.json();
-                setPatients(data.recentPatients || []);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (auth.token) fetchPatients();
+        if (auth.token) {
+            fetchPatients();
+            // Set up polling every 30 seconds
+            const interval = setInterval(fetchPatients, 30000);
+            return () => clearInterval(interval);
+        }
     }, [auth.token]);
 
     const handleDelete = async (patientId) => {
@@ -87,32 +91,28 @@ const Patients = () => {
     };
 
     const handleSaveEdit = async () => {
-        try {
-            const response = await fetch(`http://localhost:5000/api/admin/update-user/${editDialog.patient._id}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${auth.token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(editFormData),
-            });
+  try {
+    const response = await fetch(`http://localhost:5000/api/admin/update-user/${editDialog.patient._id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${auth.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editFormData),
+    });
 
-            if (!response.ok) throw new Error('Failed to update patient');
+    if (!response.ok) throw new Error('Failed to update patient');
 
-            const data = await response.json();
-            toast.success(data.message);
-            
-            // Update the patients list with the new data
-            setPatients(patients.map(patient => 
-                patient._id === editDialog.patient._id ? { ...patient, ...editFormData } : patient
-            ));
-            
-            setEditDialog({ isOpen: false, patient: null });
-        } catch (err) {
-            toast.error(err.message);
-        }
-    };
+    const data = await response.json();
+    toast.success(data.message);
 
+    await fetchPatients(); // Re-fetch all patients to ensure the state is fully updated
+
+    setEditDialog({ isOpen: false, patient: null });
+  } catch (err) {
+    toast.error(err.message);
+  }
+};
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setEditFormData(prev => ({
@@ -126,28 +126,59 @@ const Patients = () => {
             <SidebarAdmin />
             <main className="flex-1 ml-64">
                 <AdminHeader />
-                <div className="p-5">
-                    <h1 className="text-4xl font-bold mb-6">Patients</h1>
+                <div className="p-6 max-w-7xl mx-auto">
+                    {/* Header Section */}
+                    <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border-l-4 border-green-500">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-green-100 p-2 rounded-full">
+                                    <FaUser className="h-6 w-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-semibold text-gray-800">Patients</h1>
+                                    <p className="text-sm text-gray-500 mt-1">Manage and review all registered patients</p>
+                                </div>
+                            </div>
+                            <div className="bg-green-50 px-4 py-2 rounded-full">
+                                <span className="text-sm font-medium text-green-600">
+                                    {patients.length} {patients.length === 1 ? 'Patient' : 'Patients'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Table Section */}
                     <div className="bg-white rounded-lg shadow-sm p-6">
                         {loading ? (
-                            <div className="text-center text-gray-500">Loading patients...</div>
+                            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                                <FaUser className="mb-4 h-10 w-10 text-green-300" />
+                                Loading patients...
+                            </div>
                         ) : error ? (
-                            <div className="text-center text-red-500">{error}</div>
+                            <div className="flex flex-col items-center justify-center py-16 text-red-500">
+                                <FaUser className="mb-4 h-10 w-10 text-red-300" />
+                                {error}
+                            </div>
+                        ) : patients.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                                <FaUser className="mb-4 h-10 w-10 text-green-300" />
+                                No patients found.
+                            </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-y">
+                                        <tr className="border-y bg-gray-50">
                                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
                                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
                                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
                                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Phone</th>
+                                            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                                             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {patients.map((patient) => (
-                                            <tr key={patient._id} className="border-b">
+                                            <tr key={patient._id} className="border-b hover:bg-green-50/40 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-medium text-gray-900">{patient.name}</span>
@@ -156,6 +187,13 @@ const Patients = () => {
                                                 <td className="px-6 py-4 text-gray-600">{patient.email}</td>
                                                 <td className="px-6 py-4 text-gray-600">{patient.location || 'N/A'}</td>
                                                 <td className="px-6 py-4 text-gray-600">{patient.phone || 'N/A'}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded-full text-xs ${patient.isActive === false
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-green-100 text-green-800'}`}>
+                                                        {patient.isActive === false ? 'Inactive' : 'Active'}
+                                                    </span>
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
                                                         <button

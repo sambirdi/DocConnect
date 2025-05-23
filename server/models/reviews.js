@@ -23,5 +23,8 @@ const reviewSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Add indexes
+reviewSchema.index({ doctorId: 1, createdAt: -1 });
+reviewSchema.index({ patientId: 1 });
 
 module.exports = mongoose.models.Review || mongoose.model('Review', reviewSchema);
